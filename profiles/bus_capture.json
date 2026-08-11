@@ -1,0 +1,286 @@
+{
+  "_comment": [
+    "Functional state of the physical GPIB bus, captured read-only through a",
+    "real Prologix GPIB-ETHERNET adapter (firmware 01.06.06.00).",
+    "",
+    "Every 'measured' value below is a verbatim instrument reply with its",
+    "terminator shown explicitly. Values marked 'derived' follow the same",
+    "documented construction but were not observed directly -- they are marked",
+    "so nobody mistakes an inference for a measurement.",
+    "",
+    "Regenerate with: python tools/ab_instruments.py --host <adapter>"
+  ],
+  "captured": "2026-08-10",
+  "gateway": {
+    "type": "Prologix GPIB-ETHERNET",
+    "host": "192.168.1.80",
+    "port": 1234,
+    "firmware": "01.06.06.00",
+    "savecfg": 1,
+    "baseline": {
+      "addr": 4, "auto": 0, "read_tmo_ms": 200,
+      "eos": 3, "eoi": 1, "eot_enable": 0, "eot_char": 0
+    }
+  },
+  "bus_wide_findings": {
+    "terminator": "LF (0x0A) on every instrument; no CR anywhere",
+    "integer_signing": {
+      "signed": ["Agilent", "Hewlett-Packard", "Keysight"],
+      "unsigned": ["Keithley", "Fluke"],
+      "note": "*ESR? reads '+36' on a 34411A and '116' on a Keithley"
+    },
+    "serial_poll_idle": {
+      "4": ["Keithley 2002", "Keithley 2001M", "Keithley 2010",
+            "Fluke PM6690", "Agilent 34411A"],
+      "0": ["Agilent 33250A", "HP E3631A"],
+      "note": "MAV (0x10) sets on top. Bit 2 tracks the error queue on the Agilent/HP units, so a unit idling at 0 reads 4 once its queue is dirty."
+    },
+    "unit_query": "A bare UNIT? is silent on every DMM tested",
+    "error_queues": {
+      "_comment": [
+        "Deliberately NOT recorded as per-instrument measurements. The queue",
+        "contents observed during profiling were dominated by errors the",
+        "profiling itself caused, so they describe our tooling, not the",
+        "instruments. What IS durable is the mechanism below.",
+        "",
+        "An ungated '++read' costs two error-queue slots on any query the",
+        "instrument does not implement: -113 'Undefined header' for the query,",
+        "then -420 'Query UNTERMINATED' because the read addressed a device",
+        "with nothing to say. A full probe battery overflowed the queues on",
+        "four of the seven instruments here (-350 'Queue overflow'), which",
+        "destroys whatever real errors were in them.",
+        "",
+        "Discarding a socket buffer without consuming the instrument's reply",
+        "leaves it addressed to talk, and the next query then logs -410",
+        "'Query INTERRUPTED'.",
+        "",
+        "tools/buslib.py now gates every read on the MAV bit for this reason.",
+        "Anything reading this bus should do the same."
+      ],
+      "esr_bits_observed": {
+        "Keithley 2002/2001M/2010": "52 = QYE | EXE | CME",
+        "Fluke PM6690": "16 = EXE",
+        "Agilent 34411A / 33250A": "+36 = QYE | CME",
+        "HP E3631A": "+44 = QYE | DDE | CME"
+      },
+      "emulator_behaviour": [
+        "IMPLEMENTED. The emulator keeps a per-instrument FIFO and latches the",
+        "matching *ESR? bits. SYST:ERR? drains one entry per query, *CLS and",
+        "*RST clear both.",
+        "",
+        "Three codes are raised, using the SCPI-99 standard text: -113 on a",
+        "query for a node the instrument does not have, -410 when a query",
+        "arrives over an unread reply, and -420 when a read finds nothing",
+        "queued. The last two are raised by the gateway, which is where the",
+        "condition actually occurs.",
+        "",
+        "Deliberately NOT modelled: -350 'Queue overflow', -213 'Init ignored',",
+        "and per-model queue depths. Those are instrument bookkeeping. The",
+        "queue here exists to tell a developer what their client did, and both",
+        "of those codes were also the only ones whose text varied by vendor.",
+        "",
+        "An unrecognised SET command does not raise -113. It is indistinguish-",
+        "able from a valid one the emulator accepts silently, so raising there",
+        "would invent failures; under-reporting is the safer error."
+      ]
+    }
+  },
+  "instruments": {
+    "1": {
+      "name": "Keithley 2002",
+      "class": "DMM",
+      "tc_driver": "Keithley 2002",
+      "idn": "KEITHLEY INSTRUMENTS INC.,MODEL 2002,4461274,B02  /A02  ",
+      "measured": {
+        "*OPT?": "MEM2,0",
+        "FUNC?": "\"VOLT:DC\"",
+        "CONF?": "\"VOLT:DC\"",
+        "READ?": "+10.000086E+00NVDC,+20565.811885SECS,+40709RDNG#,00EXTCHAN",
+        "VOLT:DC:NPLC?": "1.00",
+        "VOLT:DC:RANG?": "20.000000",
+        "VOLT:DC:RANG:AUTO?": "1",
+        "SYST:VERS?": "1991.0"
+      },
+      "notes": [
+        "CONF? equals FUNC? -- no range/resolution pair, unlike Agilent.",
+        "Reading carries elements: value, timestamp, reading number, channel.",
+        "Mantissa is NOT normalised: 10 V reads +10.000086E+00, exponent E+00.",
+        "Only the 10 V DC case is measured; the fixed E+00 exponent is derived."
+      ]
+    },
+    "2": {
+      "name": "Keithley 2001M",
+      "class": "DMM",
+      "tc_driver": "Keithley 2001M",
+      "idn": "KEITHLEY INSTRUMENTS INC.,MODEL 2001M,1150952,B16  /A02  ",
+      "measured": {
+        "*OPT?": "0,0",
+        "FUNC?": "\"VOLT:DC\"",
+        "CONF?": "\"VOLT:DC\"",
+        "READ?": "+10.00005E+00NVDC,+20598.693324SECS,+69831RDNG#,00EXTCHAN",
+        "SYST:VERS?": "1991.0"
+      },
+      "notes": ["Same element format as the 2002 but five decimals, not six."]
+    },
+    "3": {
+      "name": "Keithley 2010",
+      "class": "DMM",
+      "tc_driver": "Keithley 2010",
+      "idn": "KEITHLEY INSTRUMENTS INC.,MODEL 2010,0636735,A10  /A02  ",
+      "measured": {
+        "*OPT?": "0,0",
+        "FUNC?": "\"VOLT:DC\"",
+        "CONF?": "\"VOLT:DC\"",
+        "READ?": "+1.00001363E+01",
+        "VOLT:DC:RANG?": "10.000000",
+        "SYST:VERS?": "1991.0"
+      },
+      "notes": [
+        "Does NOT use the element format its 2001/2002 siblings do.",
+        "Plain normalised scientific, eight decimals."
+      ]
+    },
+    "4": {
+      "name": "Fluke PM6690",
+      "class": "COUNTER",
+      "tc_driver": "Fluke PM6690 (Pendulum CNT-9X.txt)",
+      "idn": "FLUKE, PM6690, 979819, V1.32 26 May 2022 09:54",
+      "measured": {
+        "*OPT?": "Option 30, Option 10, 0",
+        "FUNC?": "\"FREQ 1\"",
+        "CONF?": "\"FREQ 1\"",
+        "READ?": "+9.99999962E+06",
+        "FETC?": "+1.000000011E+07",
+        "ACQ:APER?": "+1.0000000000000E-02",
+        "AVER:STAT?": "1",
+        "INP:LEV:AUTO?": "1",
+        "INP:FILT?": "0",
+        "INP:IMP?": "+1.0000000000000E+06",
+        "INP:COUP?": "AC",
+        "INP:ATT?": "+1.0000000000000E+00",
+        "DISP:ENAB?": "1",
+        "TRIG:SOUR?": "IMM",
+        "SYST:VERS?": "1999.0"
+      },
+      "notes": [
+        "Identity uses ', ' separators -- every other instrument uses bare ','.",
+        "Readings express a fixed RESOLUTION (0.01 Hz), not a fixed digit count:",
+        "+9.99999962E+06 has eight decimals, +1.000000038E+07 has nine, and both",
+        "are the same measurement one second apart. Digit count moves with the",
+        "decade, so it is NOT a READ?-versus-FETC? distinction."
+      ]
+    },
+    "5": {
+      "name": "Agilent 34411A",
+      "class": "DMM",
+      "tc_driver": "Agilent 34411A",
+      "idn": "Agilent Technologies,34411A,MY48005929,2.43-2.40-0.09-46-09",
+      "measured": {
+        "*ESR?": "+36",
+        "*STB?": "+4",
+        "FUNC?": "\"VOLT\"",
+        "CONF?": "\"VOLT +1.00000000E+01,+3.00000000E-06\"",
+        "READ?": "+1.00001121E+01",
+        "FETC?": "+1.00001121E+01",
+        "VOLT:DC:NPLC?": "+1.00000000E+00",
+        "VOLT:DC:RANG?": "+1.00000000E+01",
+        "VOLT:DC:RANG:AUTO?": "1",
+        "VOLT:DC:RES?": "+3.00000000E-06",
+        "VOLT:DC:ZERO:AUTO?": "1",
+        "VOLT:DC:IMP:AUTO?": "0",
+        "SYST:VERS?": "1994.0"
+      },
+      "measured_in_temperature_mode": {
+        "_comment": [
+          "Both blocks are measured. This instrument gets reconfigured at the",
+          "bench, so neither is 'the' state -- the DC-volts block was captured",
+          "with a 10 V reference on the inputs, this one with a 10k thermistor.",
+          "As of the last check it was back in TEMP.",
+          "",
+          "Note READ? in TEMP mode with the voltage reference still connected",
+          "returns -9.90000000E+37, SCPI's not-a-number marker."
+        ],
+        "FUNC?": "\"TEMP\"",
+        "CONF?": "\"TEMP THER,10000,+1.00000000E+00,+3.00000000E-07\"",
+        "READ?": "+2.28648288E+01",
+        "READ?_with_voltage_on_inputs": "-9.90000000E+37",
+        "VOLT:DC:RANG?": "+1.00000000E-01"
+      },
+      "notes": [
+        "DC-volts CONF? is VERIFIED and the emulator already matched it byte",
+        "for byte -- the eight-decimal range/resolution pair inferred from the",
+        "temperature capture was correct.",
+        "This unit is reconfigured at the bench between sessions, so check its",
+        "actual mode before treating either block as current.",
+        "CONF? parameters carry EIGHT decimals; our earlier six were wrong.",
+        "VOLT:DC:AVER:STAT? and AVER:COUN? are silent -- no such nodes.",
+        "RANG? reports the range in USE under autoranging (10 V here, 0.1 V",
+        "on the thermistor), so it tracks the signal, not a fixed maximum."
+      ]
+    },
+    "6": {
+      "name": "Agilent 33250A",
+      "class": "FUNCGEN",
+      "tc_driver": "Agilent 33250A",
+      "idn": "Agilent Technologies,33250A,0,2.04-1.01-2.00-03-2",
+      "measured": {
+        "*OPT?": "<silent, logs -113 Undefined header>",
+        "FUNC?": "SIN",
+        "FREQ?": "+1.0000000000000E+03",
+        "VOLT?": "+1.0000000000000E-01",
+        "VOLT:OFFS?": "+0.0000000000000E+00",
+        "VOLT:UNIT?": "VPP",
+        "OUTP?": "0",
+        "OUTP:LOAD?": "+5.0000000000000E+01",
+        "OUTP:POL?": "NORM",
+        "PHAS?": "+0.0000000000000E+00",
+        "FUNC:SQU:DCYC?": "+5.0000000000000E+01",
+        "FUNC:RAMP:SYMM?": "+1.0000000000000E+02",
+        "BURS:STAT?": "0",
+        "SWE:STAT?": "0",
+        "AM:STAT?": "0",
+        "FM:STAT?": "0",
+        "TRIG:SOUR?": "IMM",
+        "SYST:VERS?": "1994.0"
+      },
+      "notes": [
+        "FUNC? returns a BARE waveform name with no quotes -- unlike every",
+        "measuring instrument on this bus, which quotes its function.",
+        "Serial poll idles at 0, not 4.",
+        "Output was OFF throughout; no active-mode behaviour was exercised."
+      ]
+    },
+    "7": {
+      "name": "HP E3631A",
+      "class": "PSU",
+      "tc_driver": null,
+      "idn": "HEWLETT-PACKARD,E3631A,0,2.1-5.0-1.0",
+      "measured": {
+        "*OPT?": "<silent, logs -113 Undefined header>",
+        "*STB?": "+0",
+        "INST?": "P6V",
+        "INST:SEL?": "P6V",
+        "VOLT?": "+0.00000000E+00",
+        "CURR?": "+5.00000000E+00",
+        "MEAS:VOLT?": "-4.81193600E-01",
+        "MEAS:CURR?": "+1.69165000E+00",
+        "OUTP?": "0",
+        "APPL?": "\"0.000000,5.000000\"",
+        "VOLT:PROT?": "<silent>",
+        "DISP?": "1",
+        "SYST:VERS?": "1995.0"
+      },
+      "notes": [
+        "NO TestController driver exists -- AgilentHP E363xA.TXT covers the",
+        "E3632A/E3633A/E3634A only. Kept out of the startup bench for that",
+        "reason; a name that resolves to no driver breaks the client's load.",
+        "APPL? is QUOTED, unlike every other reply this unit gives.",
+        "MEAS:VOLT? is the meter, not the setpoint: -0.481 V with output off",
+        "while VOLT? reads +0.000.",
+        "*OPT? and the VOLT:PROT subsystem genuinely do not exist on this model.",
+        "Serial poll idles at 0 and reads 16 with data pending, not 20.",
+        "Read-only throughout: this supply may be connected to a load."
+      ]
+    }
+  }
+}

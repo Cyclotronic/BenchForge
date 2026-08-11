@@ -1,0 +1,53 @@
+name: Build Release Binary
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Build Executable with PyInstaller
+        run: |
+          python build_exe.py
+
+      - name: Verify Build Output
+        run: |
+          if (Test-Path "dist/BenchForge/BenchForge.exe") {
+            Write-Host "Build verified successfully."
+          } else {
+            Write-Error "Build failed: BenchForge.exe not found."
+            exit 1
+          }
+
+      - name: Compress Release Folder
+        run: |
+          Compress-Archive -Path dist/BenchForge/* -DestinationPath dist/BenchForge-Windows.zip
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/BenchForge-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

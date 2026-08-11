@@ -1,0 +1,722 @@
+{
+  "gateway": "192.168.1.85",
+  "captured": "2026-08-10 16:24:54",
+  "method": "raw VXI-11 / ONC-RPC, instrument state not modified",
+  "portmapper": {
+    "core": 1024,
+    "abort": 0,
+    "interrupt": 0
+  },
+  "links": [
+    {
+      "device": "gpib0,0",
+      "lid": 30185912,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.61
+    },
+    {
+      "device": "gpib0,1",
+      "lid": 29940336,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.95
+    },
+    {
+      "device": "gpib0,2",
+      "lid": 30182880,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.92
+    },
+    {
+      "device": "gpib0,3",
+      "lid": 30186520,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.88
+    },
+    {
+      "device": "gpib0,4",
+      "lid": 29937424,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.83
+    },
+    {
+      "device": "gpib0,5",
+      "lid": 30189888,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.09
+    },
+    {
+      "device": "gpib0,6",
+      "lid": 33553672,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.11
+    },
+    {
+      "device": "gpib0,7",
+      "lid": 33551896,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.09
+    },
+    {
+      "device": "gpib0,8",
+      "lid": 33550048,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.08
+    },
+    {
+      "device": "gpib0,9",
+      "lid": 33548200,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.05
+    },
+    {
+      "device": "gpib0,10",
+      "lid": 33546352,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.1
+    },
+    {
+      "device": "gpib0,11",
+      "lid": 33544488,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.1
+    },
+    {
+      "device": "gpib0,12",
+      "lid": 33542632,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.1
+    },
+    {
+      "device": "gpib0,13",
+      "lid": 33540776,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.09
+    },
+    {
+      "device": "gpib0,14",
+      "lid": 33538920,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.9
+    },
+    {
+      "device": "gpib0,15",
+      "lid": 33537064,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.89
+    },
+    {
+      "device": "gpib0,16",
+      "lid": 33535208,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.9
+    },
+    {
+      "device": "gpib0,17",
+      "lid": 30043848,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.93
+    },
+    {
+      "device": "gpib0,18",
+      "lid": 29895568,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.9
+    },
+    {
+      "device": "gpib0,19",
+      "lid": 29893760,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.85
+    },
+    {
+      "device": "gpib0,20",
+      "lid": 29891904,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.84
+    },
+    {
+      "device": "gpib0,21",
+      "lid": 29890048,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.95
+    },
+    {
+      "device": "gpib0,22",
+      "lid": 29888192,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.92
+    },
+    {
+      "device": "gpib0,23",
+      "lid": 29886336,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.87
+    },
+    {
+      "device": "gpib0,24",
+      "lid": 29884480,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.91
+    },
+    {
+      "device": "gpib0,25",
+      "lid": 29882624,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.87
+    },
+    {
+      "device": "gpib0,26",
+      "lid": 29880768,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.86
+    },
+    {
+      "device": "gpib0,27",
+      "lid": 29878912,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 1.88
+    },
+    {
+      "device": "gpib0,28",
+      "lid": 29877056,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.08
+    },
+    {
+      "device": "gpib0,29",
+      "lid": 29875200,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.11
+    },
+    {
+      "device": "gpib0,30",
+      "lid": 29873344,
+      "abort_port": 975,
+      "max_recv_size": 16384,
+      "create_ms": 2.06
+    }
+  ],
+  "lid_allocation": {
+    "first": 30185912,
+    "last": 29873344,
+    "increments": [
+      -3491360,
+      -249096,
+      -245576,
+      -148280,
+      -1864,
+      -1856,
+      -1848,
+      -1808,
+      -1776,
+      3640,
+      242544,
+      252464,
+      3363784
+    ],
+    "note": "non-sequential"
+  },
+  "create_link_failures": {
+    "gpib0,31": {
+      "error": 0,
+      "lid": 29871488,
+      "abort_port": 975,
+      "max_recv_size": 16384
+    },
+    "gpib0,99": {
+      "error": 3,
+      "text": "3 (device not accessible)",
+      "ms": 1.28
+    },
+    "bogus0": {
+      "error": 3,
+      "text": "3 (device not accessible)",
+      "ms": 1.24
+    },
+    "gpib1,5": {
+      "error": 3,
+      "text": "3 (device not accessible)",
+      "ms": 1.3
+    },
+    "gpib0": {
+      "error": 0,
+      "lid": 29871472,
+      "abort_port": 975,
+      "max_recv_size": 16384
+    },
+    "inst0": {
+      "error": 3,
+      "text": "3 (device not accessible)",
+      "ms": 1.43
+    },
+    "": {
+      "error": 3,
+      "text": "3 (device not accessible)",
+      "ms": 1.4
+    }
+  },
+  "read_write": {
+    "write": {
+      "error": 0,
+      "text": "0 (no error)",
+      "size": 6,
+      "sent": 6,
+      "ms": 1.35
+    },
+    "read": {
+      "error": 0,
+      "text": "0 (no error)",
+      "reason": 4,
+      "reason_text": "END",
+      "data": "Agilent Technologies,34411A,MY48005929,2.43-2.40-0.09-46-09\n",
+      "ms": 8.9
+    },
+    "partial_read": {
+      "request_size": 10,
+      "first": "Agilent Te",
+      "first_reason": 1,
+      "first_reason_text": "REQCNT",
+      "remainder": "chnologies,34411A,MY48005929,2.43-2.40-0.09-46-09\n",
+      "remainder_reason": 4,
+      "remainder_reason_text": "END"
+    },
+    "empty_read": [
+      {
+        "io_timeout": 500,
+        "error": 15,
+        "text": "15 (I/O timeout)",
+        "reason": 0,
+        "elapsed_ms": 665.53,
+        "data": ""
+      },
+      {
+        "io_timeout": 2000,
+        "error": 15,
+        "text": "15 (I/O timeout)",
+        "reason": 0,
+        "elapsed_ms": 2166.72,
+        "data": ""
+      }
+    ],
+    "term_char": {
+      "term_char": ",",
+      "error": 0,
+      "reason": 2,
+      "reason_text": "CHR",
+      "data": "Agilent Technologies,"
+    },
+    "write_without_end": {
+      "error": 0,
+      "text": "0 (no error)",
+      "size": 6
+    }
+  },
+  "serial_poll": {
+    "0": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "1": {
+      "idle": 4,
+      "pending": 20,
+      "after_read": 20,
+      "errors": [
+        0,
+        0,
+        15
+      ]
+    },
+    "2": {
+      "idle": 4,
+      "pending": 20,
+      "after_read": 4,
+      "errors": [
+        0,
+        0,
+        0
+      ]
+    },
+    "3": {
+      "idle": 4,
+      "pending": 20,
+      "after_read": 4,
+      "errors": [
+        15,
+        0,
+        0
+      ]
+    },
+    "4": {
+      "idle": 4,
+      "pending": 20,
+      "after_read": 4,
+      "errors": [
+        0,
+        0,
+        0
+      ]
+    },
+    "5": {
+      "idle": 0,
+      "pending": 16,
+      "after_read": 0,
+      "errors": [
+        0,
+        0,
+        0
+      ]
+    },
+    "6": {
+      "idle": 4,
+      "pending": 20,
+      "after_read": 4,
+      "errors": [
+        0,
+        0,
+        0
+      ]
+    },
+    "7": {
+      "idle": 0,
+      "pending": 16,
+      "after_read": 0,
+      "errors": [
+        0,
+        0,
+        0
+      ]
+    },
+    "8": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "9": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "10": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "11": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "12": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "13": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "14": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "15": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "16": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "17": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "18": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "19": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "20": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "21": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        17,
+        17,
+        17
+      ]
+    },
+    "22": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "23": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "24": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "25": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "26": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "27": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "28": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "29": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    },
+    "30": {
+      "idle": 0,
+      "pending": 0,
+      "after_read": 0,
+      "errors": [
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  "locking": {
+    "lock": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "second_client_locked": {
+      "error": 11,
+      "text": "11 (device locked by another link)",
+      "link_created": false
+    },
+    "unlock": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "unlock_when_unlocked": {
+      "error": 12,
+      "text": "12 (no lock held by this link)"
+    }
+  },
+  "device_ops": {
+    "device_clear": {
+      "error": 0,
+      "text": "0 (no error)",
+      "ms": 1.43
+    },
+    "device_trigger": {
+      "error": 0,
+      "text": "0 (no error)",
+      "ms": 1.43
+    },
+    "device_remote": {
+      "error": 0,
+      "text": "0 (no error)",
+      "ms": 2.38
+    },
+    "device_local": {
+      "error": 0,
+      "text": "0 (no error)",
+      "ms": 1.62
+    }
+  },
+  "after_destroy": {
+    "destroy": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "write_after_destroy": {
+      "error": 15,
+      "text": "15 (I/O timeout)"
+    },
+    "read_after_destroy": {
+      "error": 15,
+      "text": "15 (I/O timeout)"
+    },
+    "destroy_twice": {
+      "error": 4,
+      "text": "4 (invalid link identifier)"
+    }
+  },
+  "services": {
+    "http": {
+      "bytes": 1457,
+      "body": "HTTP/1.1 200 OK\r\nDATE: THU JAN 01 00:41:54 1970\r\nCache-Control: no-cache\r\nConnection: close\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\">\n<html>\n  <head>\n    <title>\nAgilent E5810 (00-30-D3-07-A4-C6)    </title>\n    <meta http-equiv=\"Content-Type\" content= \"text/html; charset=iso-8859-1\">\n    <script type=\"text/javascript\"> \n    <!--\n    function isIndex()\n    {\n      return true;\n    }\n    //-->\n    </script> \n  </head>\n  <frameset rows=\"88,*\"\n            cols=\"*\"\n            border=\"0\"\n            frameborder=\"no\"\n            bordercolor=\"#ffffff\"\n            framespacing=\"0\"\n  >\n    <frame src=\"/html/top.html\"\n           name=\"top\"\n           marginwidth=\"0\"\n           marginheight=\"0\"\n           scrolling=\"no\"\n           noresize\n    >\n      <frameset rows=\"*\" cols=\"128,*\" framespacing=\"0\">\n        <frame src=\"/html/navigation.html\"\n               name=\"navigation\"\n               marginwidth= \"0\"\n               marginheight=\"0\"\n               noresize\n               scrolling=\"auto\"\n        >\n        <frame src=\"/html/home.html\"\n               name=\"content\"\n               marginwidth=\"0\"\n               marginheight=\"0\"\n               scrolling=\"auto\"\n        >\n      </frameset>\n      <noframes>\n        <body bgcolor=\"#FFFFFF\">\n          <h2>\n            Sorry, your browser does not support frames\n          </h2>\n        </body>\n      </noframes>\n  </frameset>\n</html>\n\n"
+    },
+    "telnet_banner": "\ufffd\ufffd\u0001Welcome to the E5810 LAN/GPIB Gateway Configuration Utility.\r\n  Controls GPIB and RS-232 interfaces via the LAN\r\n\nCommands\r\n  ?                View Available Commands\r\n  exit, quit       Exit WITHOUT Saving Configuration Changes (see reboot)\r\n  reboot           Save Configuration Changes and Restart E5810\r\n  status           View the LAN/GPIB Gateway Connection Status\r\n\r\nRead-only E5810 Parameters\r\n  hardware-addr:   0030D307A4C6    # Ethernet (MAC) Address\r\n  serial-num:      MY43000991      # Serial Number \r\n\r\nConfigurable Parameters saved in E5810 non-volatile memory\r\n  (Note: Some E5810 current values \"in-use\" may be different)\r\n  dhcp:            ON              # Configure LAN for DHCP boot \r\n   ip:             169.254.58.10   # Internet Protocol (IP) Address \r\n   subnet-mask:    255.255.0.0     # Network Subnet Mask \r\n   gateway:        0.0.0.0         # Network Gateway \r\n\r\n  dns-server:      0.0.0.0         # DNS Server \r\n  hostname:                                           \r\n                                   # Internet Hostname \r\n\r\n  description:     Agilent E5810 (00-30-D3-07-A4-C6)       \r\n                                   # Device Description (UPnP Friendly Name)\r\n  upnp:            ON              # Configured as UPnP device\r\n\r\n  lan-timeout:     7200            # LAN Timeout (Keepalive) in sec \r\n  io-timeout:      120             # I/O Timeout in seconds \r\n\r\n  gpib-name:       gpib0           # GPIB SICL Interface Name \r\n  gpib-address:    21              # GPIB System Controller Address \r\n  gpib-unit:       7               # GPIB Logical Unit (LU) Number \r\n\r\n  rs232-name:      COM1            # RS-232 SICL Interface Name \r\n  rs232-baud:      9600            # RS-232 Baud Rate \r\n  rs232-bits:      8               # RS-232 Bits \r\n  rs232-stopbits:  1               # RS-232 Stop Bits \r\n  rs232-parity:    NONE            # RS-232 Parity \r\n  rs232-flow:      NONE            # RS-232 Flow Control \r\n  rs232-srq:       RI              # RS-232 SRQ \r\n\r\n> "
+  }
+}

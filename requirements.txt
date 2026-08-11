@@ -1,0 +1,10 @@
+# BenchForge Studio - Runtime Dependencies
+#
+# The emulator core (sockets, threading, parsing) is pure standard library.
+# Only the desktop UI has a third-party dependency.
+#
+# PySide6 is the Qt Company's official Python binding, licensed LGPL v3, which
+# is compatible with this project's MIT licence. Do not substitute PyQt6: it is
+# GPL v3 or paid-commercial only, and linking it would force GPL on the whole
+# application.
+PySide6>=6.5.0

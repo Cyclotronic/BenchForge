@@ -1,0 +1,19 @@
+#name Agilent 34401A
+#type DMM
+#driver SCPI
+#portType GPIB
+#cmdMode SCPI
+#id? *IDN?
+#id HEWLETT-PACKARD,34401A,0,10-1-1
+
+; Standard SCPI Queries and Commands
+#cmd? *IDN? HEWLETT-PACKARD,34401A,0,10-1-1
+#cmd? :READ? 12.345678
+#cmd? :FETC? 12.345678
+#cmd? :MEAS:VOLT:DC? 12.000123
+#cmd? :MEAS:VOLT:AC? 0.054321
+#cmd? :MEAS:RES? 1000.152
+
+#cmd :CONF:VOLT:DC 10
+#cmd :CONF:VOLT:AC 10
+#cmd :CONF:RES

@@ -1,0 +1,73 @@
+{
+  "gateway": "192.168.1.85",
+  "captured": "2026-08-10 19:32:10",
+  "link": {
+    "lid": 30184696,
+    "abort_port": 1002
+  },
+  "abort_channel": {
+    "advertised_port": 1002,
+    "portmapper": 0,
+    "reachable": false,
+    "abort_when_idle": "timeout/exception: TimeoutError",
+    "error": "TimeoutError: timed out"
+  },
+  "interrupt_channel": {
+    "portmapper": 0,
+    "create_intr_chan": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "device_enable_srq": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "callback_connected": "192.168.1.85:1026",
+    "callback_calls": [],
+    "disable_srq": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "destroy_intr_chan": {
+      "error": 0,
+      "text": "0 (no error)"
+    },
+    "destroy_twice": {
+      "error": 6,
+      "text": "6 (channel not established)"
+    }
+  },
+  "device_docmd": {
+    "skipped": "Interface Clear, Remote Enable, Pass Control -- not sent",
+    "probes": {
+      "0x00020000": {
+        "label": "Send Command (probed with empty data)",
+        "error": 8,
+        "text": "8 (operation not supported)",
+        "data_out": "",
+        "data_len": 0
+      },
+      "0x00020001": {
+        "label": "Bus Status",
+        "error": 8,
+        "text": "8 (operation not supported)",
+        "data_out": "",
+        "data_len": 0
+      },
+      "0x00020002": {
+        "label": "ATN Control (query form)",
+        "error": 8,
+        "text": "8 (operation not supported)",
+        "data_out": "",
+        "data_len": 0
+      },
+      "0x0002000A": {
+        "label": "Bus Address",
+        "error": 8,
+        "text": "8 (operation not supported)",
+        "data_out": "",
+        "data_len": 0
+      }
+    }
+  }
+}

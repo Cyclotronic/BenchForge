@@ -1,0 +1,17 @@
+#name Fluke PM6690
+#type Counter
+#driver SCPI
+#portType GPIB
+#cmdMode SCPI
+#id? *IDN?
+#id FLUKE, PM6690,0,v1.20
+
+#cmd? *IDN? FLUKE, PM6690,0,v1.20
+#cmd? :MEAS:FREQ? 10000000.05
+#cmd? :MEAS:PER? 0.0000001
+#cmd? :FETC? 10000000.05
+
+; CONF? and FUNC? are deliberately NOT defined here. The emulator answers them
+; dynamically from the counter's active function and input channel -- matching
+; a physical PM6690 (V1.32) -- so they track mode changes such as
+; FUNC:ON "FREQ:RAT 1,2". A static entry here would freeze the reported mode.

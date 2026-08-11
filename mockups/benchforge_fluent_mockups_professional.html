@@ -1,0 +1,931 @@
+<title>BenchForge Studio — Fluent UI Direction</title>
+
+<style>
+/* ============================================================
+   PAGE CHROME TOKENS  (theme-aware, prefix --p-)
+   Kept strictly separate from mockup tokens (--w-) so the
+   viewer's theme can never leak into the app mockups.
+   ============================================================ */
+:root {
+  --p-bg:        #f2f5f7;
+  --p-surface:   #ffffff;
+  --p-ink:       #17212a;
+  --p-ink-2:     #4a5b69;
+  --p-ink-3:     #7b8b98;
+  --p-line:      #dce3e9;
+  --p-accent:    #0f6cbd;
+  --p-accent-sf: #e7f0f9;
+
+  --p-font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --p-mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+
+  --p-max: 1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --p-bg:#0e1418; --p-surface:#161e24; --p-ink:#e8eef3; --p-ink-2:#a3b3bf;
+    --p-ink-3:#6e808d; --p-line:#26323b; --p-accent:#4cabe8; --p-accent-sf:#16293a;
+  }
+}
+:root[data-theme="dark"] {
+  --p-bg:#0e1418; --p-surface:#161e24; --p-ink:#e8eef3; --p-ink-2:#a3b3bf;
+  --p-ink-3:#6e808d; --p-line:#26323b; --p-accent:#4cabe8; --p-accent-sf:#16293a;
+}
+:root[data-theme="light"] {
+  --p-bg:#f2f5f7; --p-surface:#ffffff; --p-ink:#17212a; --p-ink-2:#4a5b69;
+  --p-ink-3:#7b8b98; --p-line:#dce3e9; --p-accent:#0f6cbd; --p-accent-sf:#e7f0f9;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--p-font);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: var(--p-max);
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 54px;
+}
+
+.eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--p-accent); margin: 0 0 10px;
+}
+h1 {
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(30px, 4.4vw, 44px); line-height: 1.12; font-weight: 650;
+  letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance;
+}
+h2 {
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  font-size: 23px; font-weight: 640; letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance;
+}
+h3 { font-size: 15px; font-weight: 640; margin: 0 0 8px; letter-spacing: -0.005em; }
+p  { margin: 0 0 14px; max-width: 68ch; color: var(--p-ink-2); }
+.lead { font-size: 18px; color: var(--p-ink-2); max-width: 66ch; }
+a { color: var(--p-accent); }
+
+.sec-head { border-top: 1px solid var(--p-line); padding-top: 22px; }
+.sec-head p { margin-bottom: 0; }
+
+code.inl {
+  font-family: var(--p-mono); font-size: .87em;
+  background: var(--p-accent-sf); color: var(--p-ink);
+  padding: 1px 6px; border-radius: 3px;
+}
+
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
+.tok {
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 4px;
+  padding: 12px; display: flex; flex-direction: column; gap: 9px;
+}
+.tok .sw { height: 42px; border-radius: 3px; border: 1px solid rgba(0,0,0,.14); }
+.tok .nm { font-size: 12px; font-weight: 620; line-height: 1.3; }
+.tok .hx { font-family: var(--p-mono); font-size: 11px; color: var(--p-ink-3); font-variant-numeric: tabular-nums; }
+
+.note {
+  background: var(--p-surface); border: 1px solid var(--p-line);
+  border-left: 3px solid var(--p-accent); border-radius: 0 4px 4px 0; padding: 16px 18px;
+}
+.note p:last-child { margin-bottom: 0; }
+.note h3 { color: var(--p-ink); }
+
+.stage { overflow-x: auto; padding: 4px 4px 12px; margin: 0 -4px; }
+.caption { font-size: 13px; color: var(--p-ink-3); margin: 12px 0 0; max-width: 70ch; }
+.caption strong { color: var(--p-ink-2); font-weight: 620; }
+
+/* ============================================================
+   APP MOCKUP TOKENS  (prefix --w-)   — PROFESSIONAL REGISTER
+   Squarer corners, tighter density, restrained color.
+   Fixed artwork colors; they do NOT follow the viewer theme.
+   ============================================================ */
+.win {
+  --r-card: 4px;      /* was 8 */
+  --r-ctl:  3px;      /* was 5 */
+  --r-chip: 2px;
+  width: 1080px;
+  border-radius: 5px;
+  overflow: hidden;
+  font-family: var(--p-font);
+  font-size: 12px;              /* chrome runs tighter than v1 */
+  line-height: 1.42;
+  border: 1px solid var(--w-frame);
+  background: var(--w-bg);
+  color: var(--w-ink);
+  box-shadow: 0 16px 40px -22px rgba(4,14,22,.40), 0 1px 4px -1px rgba(4,14,22,.16);
+}
+
+.win.light {
+  --w-bg:#f3f5f7; --w-surface:#ffffff; --w-surface-2:#f7f9fa; --w-surface-3:#eef1f4;
+  --w-frame:#c4ced7; --w-line:#d9e0e6; --w-line-soft:#e8ecf0;
+  --w-ink:#16202a; --w-ink-2:#485966; --w-ink-3:#788895;
+  --w-accent:#0f6cbd; --w-accent-sf:#e8f1fa; --w-accent-ln:#a8cbe9;
+  --w-good:#0e7c4a; --w-good-sf:#e7f4ed; --w-bad:#c0392f; --w-bad-sf:#fbedec;
+  --w-warn:#9a6700; --w-warn-sf:#fdf4e3;
+  --w-menubar:#f7f9fa; --w-titlebar:#e9edf1;
+}
+
+.win.dark {
+  --w-bg:#141a1f; --w-surface:#1b232a; --w-surface-2:#1f2830; --w-surface-3:#232d36;
+  --w-frame:#2d3945; --w-line:#29333c; --w-line-soft:#222b33;
+  --w-ink:#e6ecf1; --w-ink-2:#a1b1bd; --w-ink-3:#6c7e8b;
+  --w-accent:#4cabe8; --w-accent-sf:#172938; --w-accent-ln:#2c4f6c;
+  --w-good:#3bd98a; --w-good-sf:#102b20; --w-bad:#ff6b5e; --w-bad-sf:#321a18;
+  --w-warn:#e3b341; --w-warn-sf:#2c2312;
+  --w-menubar:#171e24; --w-titlebar:#0f151a;
+}
+
+/* ---------- title bar ---------- */
+.tbar {
+  height: 30px; background: var(--w-titlebar);
+  border-bottom: 1px solid var(--w-line);
+  display: flex; align-items: center; padding-left: 10px; gap: 8px;
+}
+.tbar .tt { font-size: 11.5px; color: var(--w-ink-2); }
+.tbar .caps { margin-left: auto; display: flex; height: 100%; }
+.tbar .caps span { width: 42px; display: grid; place-items: center; color: var(--w-ink-2); font-size: 10px; }
+.mark {
+  width: 14px; height: 14px; border-radius: 2px; flex: none;
+  background: linear-gradient(150deg, var(--w-accent), #2d59a8);
+  display: grid; place-items: center;
+}
+.mark svg { width: 9px; height: 9px; }
+
+/* ---------- menu bar — the strongest "real application" signal ---------- */
+.mbar {
+  height: 26px; background: var(--w-menubar);
+  border-bottom: 1px solid var(--w-line);
+  display: flex; align-items: stretch; padding-left: 4px;
+}
+.mbar > span {
+  display: inline-flex; align-items: center; padding: 0 10px;
+  font-size: 12px; color: var(--w-ink-2);
+}
+.mbar > span.act { background: var(--w-accent-sf); color: var(--w-accent); }
+
+/* ---------- toolbar: grouped commands with separators ---------- */
+.tools {
+  height: 40px; display: flex; align-items: center; gap: 6px;
+  padding: 0 10px; background: var(--w-surface); border-bottom: 1px solid var(--w-line);
+}
+.tools .sep { width: 1px; height: 18px; background: var(--w-line); margin: 0 4px; flex: none; }
+.tools .spring { flex: 1; }
+
+/* status indicator — glow dialled well down from v1 */
+.led {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 10px 4px 8px; border-radius: var(--r-chip);
+  font-size: 11.5px; font-weight: 600; border: 1px solid; white-space: nowrap;
+}
+.led .bulb { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.led.on { color: var(--w-good); background: var(--w-good-sf); border-color: color-mix(in srgb, var(--w-good) 30%, transparent); }
+.led.on .bulb { background: var(--w-good); box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--w-good) 20%, transparent); }
+.led.off { color: var(--w-ink-3); background: var(--w-surface-2); border-color: var(--w-line); }
+.led.off .bulb { background: var(--w-ink-3); opacity: .5; }
+.led .port { font-family: var(--p-mono); font-weight: 500; font-variant-numeric: tabular-nums; opacity: .8; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px; border-radius: var(--r-ctl);
+  font-size: 12px; font-weight: 550; font-family: inherit;
+  border: 1px solid var(--w-line); background: var(--w-surface); color: var(--w-ink);
+  white-space: nowrap;
+}
+.btn svg { width: 13px; height: 13px; flex: none; }
+.btn.accent { background: var(--w-accent); border-color: color-mix(in srgb, var(--w-accent) 76%, #000); color: #fff; font-weight: 600; }
+.btn.danger { color: var(--w-bad); border-color: color-mix(in srgb, var(--w-bad) 32%, transparent); background: var(--w-bad-sf); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--w-ink-2); }
+.btn.icon { width: 26px; padding: 0; justify-content: center; }
+
+/* ---------- body: rail + content ---------- */
+.body { display: flex; min-height: 494px; }
+
+.rail {
+  width: 196px; flex: none; background: var(--w-surface-3);
+  border-right: 1px solid var(--w-line); padding: 6px 6px; display: flex; flex-direction: column; gap: 1px;
+}
+.rail .grp {
+  font-size: 10px; font-weight: 660; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--w-ink-3); padding: 12px 8px 5px;
+}
+.nav {
+  display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 8px;
+  border-radius: var(--r-ctl); color: var(--w-ink-2); position: relative; font-size: 12px;
+}
+.nav svg { width: 15px; height: 15px; flex: none; opacity: .8; }
+.nav.sel {
+  background: var(--w-surface); color: var(--w-ink); font-weight: 600;
+  border: 1px solid var(--w-line);
+}
+.nav.sel::before {
+  content: ""; position: absolute; left: -6px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 15px; background: var(--w-accent);
+}
+.nav.sel svg { opacity: 1; color: var(--w-accent); }
+.nav .tally {
+  margin-left: auto; font-family: var(--p-mono); font-size: 10px;
+  font-variant-numeric: tabular-nums; color: var(--w-ink-3); padding: 0 4px;
+  border: 1px solid var(--w-line-soft); border-radius: var(--r-chip); line-height: 14px;
+  background: var(--w-surface-2);
+}
+.nav.sel .tally { color: var(--w-accent); border-color: var(--w-accent-ln); background: var(--w-accent-sf); }
+
+.content {
+  flex: 1; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+  min-width: 0; background: var(--w-bg);
+}
+.page-h { display: flex; align-items: baseline; gap: 9px; padding-bottom: 8px; border-bottom: 1px solid var(--w-line); }
+.page-h h4 { margin: 0; font-size: 15px; font-weight: 640; letter-spacing: -.005em; }
+.page-h .sub { font-size: 11.5px; color: var(--w-ink-3); }
+.page-h .act { margin-left: auto; display: flex; gap: 6px; }
+
+/* ---------- panels (were "cards") ---------- */
+.card { background: var(--w-surface); border: 1px solid var(--w-line); border-radius: var(--r-card); padding: 11px 12px; }
+.card > .ch { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--w-line-soft); }
+.card > .ch h5 { margin: 0; font-size: 11.5px; font-weight: 660; letter-spacing: .03em; text-transform: uppercase; color: var(--w-ink-2); }
+.card > .ch .hint { font-size: 11px; color: var(--w-ink-3); margin-left: auto; text-transform: none; letter-spacing: 0; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cols.wide { grid-template-columns: 1.02fr .98fr; }
+
+/* ---------- form controls ---------- */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > label { font-size: 11px; font-weight: 600; color: var(--w-ink-2); }
+.inp {
+  height: 26px; border: 1px solid var(--w-line); border-bottom-color: var(--w-ink-3);
+  border-radius: var(--r-ctl); background: var(--w-surface-2);
+  display: flex; align-items: center; padding: 0 8px;
+  font-family: var(--p-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--w-ink);
+}
+.inp.focus { border-bottom: 2px solid var(--w-accent); background: var(--w-surface); padding-bottom: 0; }
+.inp .unit { margin-left: auto; color: var(--w-ink-3); font-size: 10.5px; font-family: var(--p-font); }
+.sel {
+  height: 26px; border: 1px solid var(--w-line); border-radius: var(--r-ctl);
+  background: var(--w-surface-2); display: flex; align-items: center; gap: 7px;
+  padding: 0 7px 0 9px; font-size: 12px;
+}
+.sel .chev { margin-left: auto; color: var(--w-ink-3); font-size: 10px; }
+.sel svg { width: 12px; height: 12px; }
+
+.seg { display: inline-flex; background: var(--w-surface-2); border: 1px solid var(--w-line); border-radius: var(--r-ctl); overflow: hidden; }
+.seg > div { padding: 4px 11px; font-size: 11.5px; font-weight: 550; color: var(--w-ink-2); white-space: nowrap; border-right: 1px solid var(--w-line); }
+.seg > div:last-child { border-right: none; }
+.seg > div.on { background: var(--w-accent-sf); color: var(--w-accent); font-weight: 640; box-shadow: inset 0 -2px 0 var(--w-accent); }
+
+.slider { display: flex; align-items: center; gap: 10px; }
+.track { flex: 1; height: 3px; background: var(--w-line); position: relative; border-radius: 2px; }
+.track .fill { position: absolute; inset: 0 auto 0 0; width: 14%; background: var(--w-accent); border-radius: 2px; }
+.track .knob {
+  position: absolute; left: 14%; top: 50%; transform: translate(-50%,-50%);
+  width: 12px; height: 12px; border-radius: 2px; background: var(--w-accent);
+  border: 1px solid color-mix(in srgb, var(--w-accent) 70%, #000);
+}
+.slider .val { font-family: var(--p-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; font-weight: 600; }
+
+/* ---------- data grids ---------- */
+table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.grid th {
+  text-align: left; font-size: 11px; font-weight: 620; color: var(--w-ink-2);
+  padding: 5px 8px; background: var(--w-surface-2);
+  border-bottom: 1px solid var(--w-line); border-right: 1px solid var(--w-line-soft);
+  white-space: nowrap; position: relative;
+}
+table.grid th:last-child { border-right: none; }
+table.grid th .sort { color: var(--w-accent); font-size: 9px; margin-left: 4px; }
+table.grid td { padding: 4px 8px; border-bottom: 1px solid var(--w-line-soft); vertical-align: middle; }
+table.grid tbody tr:nth-child(even) td { background: var(--w-surface-2); }
+table.grid tr.hl td { background: var(--w-accent-sf); }
+table.grid tr:last-child td { border-bottom: none; }
+.mono { font-family: var(--p-mono); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.num { text-align: right; font-family: var(--p-mono); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.dim { color: var(--w-ink-3); }
+
+.addr {
+  display: inline-block; font-family: var(--p-mono); font-size: 10.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums; padding: 1px 5px; border-radius: var(--r-chip);
+  background: var(--w-accent-sf); color: var(--w-accent); border: 1px solid var(--w-accent-ln);
+}
+.addr.mute { background: var(--w-surface-2); color: var(--w-ink-3); border-color: var(--w-line); }
+
+.dir { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.dir.in { color: var(--w-accent); }
+.dir.out { color: var(--w-good); }
+.dir svg { width: 10px; height: 10px; }
+
+.vd { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 620; }
+.vd .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.vd.pass { color: var(--w-good); } .vd.pass .dot { background: var(--w-good); }
+.vd.fail { color: var(--w-bad); }  .vd.fail .dot { background: var(--w-bad); }
+
+tr.vrow td:first-child { position: relative; padding-left: 13px; }
+tr.vrow td:first-child::before { content: ""; position: absolute; left: 3px; top: 5px; bottom: 5px; width: 2px; background: var(--w-good); }
+tr.vrow.bad td:first-child::before { background: var(--w-bad); }
+
+/* ---------- metric tiles — flatter, less colour ---------- */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--w-line); border: 1px solid var(--w-line); border-radius: var(--r-card); overflow: hidden; }
+.tile { background: var(--w-surface); padding: 8px 11px; }
+.tile .k { font-size: 10px; font-weight: 620; letter-spacing: .07em; text-transform: uppercase; color: var(--w-ink-3); margin-bottom: 2px; }
+.tile .v { font-family: var(--p-mono); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.15; }
+.tile .u { font-size: 10.5px; color: var(--w-ink-3); font-family: var(--p-font); font-weight: 500; margin-left: 2px; }
+.tile.ok .v { color: var(--w-good); }
+
+.spark { display: block; width: 100%; height: 30px; margin-top: 5px; }
+
+/* ---------- multi-pane status bar ---------- */
+.sbar {
+  height: 24px; border-top: 1px solid var(--w-line); background: var(--w-surface);
+  display: flex; align-items: stretch; font-size: 11px; color: var(--w-ink-3);
+}
+.sbar > span { display: inline-flex; align-items: center; gap: 5px; padding: 0 11px; border-right: 1px solid var(--w-line-soft); }
+.sbar > span svg { width: 11px; height: 11px; }
+.sbar .spring { flex: 1; border-right: none; }
+.sbar .mono-pane { font-family: var(--p-mono); font-variant-numeric: tabular-nums; border-right: none; }
+
+/* ---------- component board ---------- */
+.board {
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 6px; padding: 22px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 26px;
+}
+.spec .st { font-size: 10.5px; font-weight: 660; letter-spacing: .1em; text-transform: uppercase; color: var(--p-ink-3); margin-bottom: 11px; padding-bottom: 7px; border-bottom: 1px solid var(--p-line); }
+.spec .row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 9px; }
+.spec .row:last-child { margin-bottom: 0; }
+.spec .lbl { font-size: 11px; color: var(--p-ink-3); width: 52px; flex: none; }
+
+.demo { --r-card:4px; --r-ctl:3px; --r-chip:2px; font-size: 12px; }
+.demo.light {
+  --w-bg:#f3f5f7; --w-surface:#fff; --w-surface-2:#f7f9fa; --w-line:#d9e0e6; --w-line-soft:#e8ecf0;
+  --w-ink:#16202a; --w-ink-2:#485966; --w-ink-3:#788895; --w-accent:#0f6cbd; --w-accent-sf:#e8f1fa; --w-accent-ln:#a8cbe9;
+  --w-good:#0e7c4a; --w-good-sf:#e7f4ed; --w-bad:#c0392f; --w-bad-sf:#fbedec;
+}
+.demo.dark {
+  --w-bg:#141a1f; --w-surface:#1b232a; --w-surface-2:#1f2830; --w-line:#29333c; --w-line-soft:#222b33;
+  --w-ink:#e6ecf1; --w-ink-2:#a1b1bd; --w-ink-3:#6c7e8b; --w-accent:#4cabe8; --w-accent-sf:#172938; --w-accent-ln:#2c4f6c;
+  --w-good:#3bd98a; --w-good-sf:#102b20; --w-bad:#ff6b5e; --w-bad-sf:#321a18;
+  background:#141a1f; border-radius:5px; padding:14px; margin:-14px;
+}
+
+/* ---------- before/after chips ---------- */
+.deltas { display: grid; grid-template-columns: repeat(auto-fit, minmax(216px,1fr)); gap: 12px; }
+.delta { background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 4px; padding: 13px 15px; }
+.delta .t { font-size: 12.5px; font-weight: 650; margin-bottom: 5px; }
+.delta .v { font-family: var(--p-mono); font-size: 11.5px; color: var(--p-ink-3); }
+.delta .v b { color: var(--p-accent); font-weight: 600; }
+.delta p { font-size: 12.5px; margin: 7px 0 0; line-height: 1.5; }
+
+.map { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.map th { text-align: left; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--p-ink-3); font-weight: 660; padding: 0 12px 8px; border-bottom: 1px solid var(--p-line); }
+.map td { padding: 9px 12px; border-bottom: 1px solid var(--p-line); vertical-align: top; }
+.map tr:last-child td { border-bottom: none; }
+.map td.t { font-family: var(--p-mono); font-size: 12px; color: var(--p-accent); white-space: nowrap; }
+.map td.d { color: var(--p-ink-2); }
+
+pre {
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 4px;
+  padding: 15px 17px; overflow-x: auto; font-family: var(--p-mono);
+  font-size: 12.5px; line-height: 1.62; margin: 0; color: var(--p-ink);
+}
+pre .c { color: var(--p-ink-3); }
+pre .s { color: var(--p-accent); }
+
+ul.pts { margin: 0; padding-left: 19px; color: var(--p-ink-2); }
+ul.pts li { margin-bottom: 7px; }
+ul.pts li:last-child { margin-bottom: 0; }
+ul.pts strong { color: var(--p-ink); font-weight: 620; }
+
+@media (max-width: 720px) {
+  .wrap { padding: 36px 16px 64px; gap: 42px; }
+  .board { padding: 16px; gap: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Interface direction · rev 2 · professional register</p>
+    <h1>BenchForge Studio, dressed as bench&nbsp;software</h1>
+    <p class="lead">
+      Same Fluent structure as the first pass, pitched one register down — closer to Visual Studio
+      and SSMS than to Windows Settings. Denser, squarer, quieter with colour, and carrying the
+      chrome that makes an application read as a tool rather than an app.
+    </p>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <h2>What moved from rev 1</h2>
+      <p>The consumer-Fluent cues were doing the damage. Six changes carry the shift.</p>
+    </div>
+    <div class="deltas" style="margin-top:20px;">
+      <div class="delta">
+        <div class="t">Menu bar added</div>
+        <div class="v">File · Edit · View · Emulator · Tools · Help</div>
+        <p>The single strongest signal that something is an application and not a utility script. Also gives keyboard-driven engineers the access keys they expect.</p>
+      </div>
+      <div class="delta">
+        <div class="t">Corner radius</div>
+        <div class="v">8px → <b>4px</b> panels · 5px → <b>3px</b> controls</div>
+        <p>Rounded reads consumer. Squarer reads instrument. This is the change you feel most and notice least.</p>
+      </div>
+      <div class="delta">
+        <div class="t">Density</div>
+        <div class="v">rows 28px → <b>22px</b> · chrome 13px → <b>12px</b></div>
+        <p>Roughly a third more data on screen. Business tools are judged on how much they show at once.</p>
+      </div>
+      <div class="delta">
+        <div class="t">Toolbar, not floating buttons</div>
+        <div class="v">grouped · vertical separators</div>
+        <p>Commands cluster by function with rules between groups, the way Office and VS have done it for twenty years.</p>
+      </div>
+      <div class="delta">
+        <div class="t">Colour pulled back</div>
+        <div class="v">glow 9px bloom → <b>2.5px ring</b></div>
+        <p>The LED idea survives; the volume drops. Tiles lost their tinted fills and now sit on hairline dividers.</p>
+      </div>
+      <div class="delta">
+        <div class="t">Real data grids</div>
+        <div class="v">banded rows · sort carets · header rules</div>
+        <p>Zebra striping and a sort indicator make a table look operable rather than printed.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Palette</h2>
+      <p>Unchanged from rev 1 — it was doing its job. Semantic colours stay separate from the accent so a pass state never reads as a selection.</p>
+    </div>
+    <div class="tokens" style="margin-top:20px;">
+      <div class="tok"><div class="sw" style="background:#f3f5f7"></div><div class="nm">Ground</div><div class="hx">#F3F5F7</div></div>
+      <div class="tok"><div class="sw" style="background:#141a1f"></div><div class="nm">Ground dark</div><div class="hx">#141A1F</div></div>
+      <div class="tok"><div class="sw" style="background:#1b232a"></div><div class="nm">Surface dark</div><div class="hx">#1B232A</div></div>
+      <div class="tok"><div class="sw" style="background:#0f6cbd"></div><div class="nm">Accent</div><div class="hx">#0F6CBD</div></div>
+      <div class="tok"><div class="sw" style="background:#4cabe8"></div><div class="nm">Accent dark</div><div class="hx">#4CABE8</div></div>
+      <div class="tok"><div class="sw" style="background:#0e7c4a"></div><div class="nm">Running</div><div class="hx">#0E7C4A</div></div>
+      <div class="tok"><div class="sw" style="background:#3bd98a"></div><div class="nm">Running dark</div><div class="hx">#3BD98A</div></div>
+      <div class="tok"><div class="sw" style="background:#c0392f"></div><div class="nm">Fault</div><div class="hx">#C0392F</div></div>
+      <div class="tok"><div class="sw" style="background:#e3b341"></div><div class="nm">Warning</div><div class="hx">#E3B341</div></div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 1 — Adapter & Presets (light) ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>Adapter &amp; Presets — light</h2>
+      <p>Title bar, menu bar, toolbar, rail, work area, multi-pane status bar. The full six-band stack a Windows engineering tool is expected to have.</p>
+    </div>
+
+    <div class="stage" style="margin-top:20px;">
+      <div class="win light">
+
+        <div class="tbar">
+          <div class="mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></div>
+          <div class="tt">BenchForge Studio — Prologix Ethernet v01.06.06.00</div>
+          <div class="caps"><span>&#8210;</span><span>&#9633;</span><span>&#10005;</span></div>
+        </div>
+
+        <div class="mbar">
+          <span>File</span><span>Edit</span><span>View</span>
+          <span class="act">Emulator</span><span>Tools</span><span>Help</span>
+        </div>
+
+        <div class="tools">
+          <button class="btn accent">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Start
+          </button>
+          <button class="btn" style="opacity:.5;">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Stop
+          </button>
+          <button class="btn icon" title="Restart">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 1 2.3 5.6"/><path d="M4 20v-5h5"/></svg>
+          </button>
+          <div class="sep"></div>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Run validation</button>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19h-20"/></svg>Benchmark</button>
+          <div class="sep"></div>
+          <button class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4M4 19h16"/></svg>Export config</button>
+          <div class="spring"></div>
+          <div class="led off"><span class="bulb"></span> Stopped <span class="port">1234 / 5025</span></div>
+        </div>
+
+        <div class="body">
+          <nav class="rail">
+            <div class="grp">Emulate</div>
+            <div class="nav sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 10v4M11 10v4M15 10v4"/></svg>Adapter &amp; Presets</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Device Parser<span class="tally">2</span></div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Settings Generator</div>
+            <div class="grp">Verify</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/></svg>Validation &amp; Stress</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Traffic Snoop</div>
+          </nav>
+
+          <div class="content">
+            <div class="page-h">
+              <h4>Adapter &amp; Presets</h4>
+              <div class="sub">Hardware personality and listener binding</div>
+              <div class="act"><button class="btn" style="height:24px;font-size:11.5px;">Reset to defaults</button></div>
+            </div>
+
+            <div class="card">
+              <div class="ch"><h5>Hardware profile</h5><div class="hint">Sets mapped devices, discovery name and default slot</div></div>
+              <div style="display:flex; gap:12px; align-items:flex-end;">
+                <div class="field" style="flex:1.35;">
+                  <label>Preset</label>
+                  <div class="sel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--w-accent)" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 10v4M11 10v4"/></svg>
+                    Prologix Ethernet (Official v01.06.06.00)<span class="chev">&#9662;</span>
+                  </div>
+                </div>
+                <div class="field" style="flex:1;">
+                  <label>Socket policy</label>
+                  <div class="seg"><div class="on">Hardware strict</div><div>Multi-client</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cols wide">
+              <div class="card">
+                <div class="ch"><h5>Listeners</h5></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+                  <div class="field"><label>Bind address</label><div class="inp">127.0.0.1</div></div>
+                  <div class="field"><label>Prologix port</label><div class="inp focus">1234</div></div>
+                  <div class="field"><label>LXI SCPI port</label><div class="inp">5025</div></div>
+                  <div class="field"><label>mDNS discovery</label><div class="inp"><span class="dim">5353</span><span class="unit">UDP</span></div></div>
+                </div>
+                <div style="margin-top:11px; padding-top:10px; border-top:1px solid var(--w-line-soft);">
+                  <div class="field">
+                    <label>Injected latency</label>
+                    <div class="slider"><div class="track"><div class="fill"></div><div class="knob"></div></div><div class="val">70 ms</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="padding-bottom:6px;">
+                <div class="ch"><h5>Mapped devices</h5><div class="hint">3 of 31 slots</div></div>
+                <table class="grid">
+                  <thead><tr><th style="width:62px;">Slot<span class="sort">&#9650;</span></th><th>Instrument</th><th>Identity</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="addr">GPIB 1</span></td><td>Agilent 34401A</td><td class="mono dim">HEWLETT-PACKARD,34401A,0,10-1-1</td></tr>
+                    <tr><td><span class="addr">GPIB 2</span></td><td>Fluke PM6690</td><td class="mono dim">FLUKE,PM6690,0,v1.20</td></tr>
+                    <tr><td><span class="addr">GPIB 4</span></td><td>Keithley 2000</td><td class="mono dim">KEITHLEY,MODEL 2000,1234567,A06/A02</td></tr>
+                  </tbody>
+                </table>
+                <div style="margin:9px 0 6px; display:flex; gap:6px;">
+                  <button class="btn" style="height:24px;font-size:11.5px;">Assign driver&hellip;</button>
+                  <button class="btn ghost" style="height:24px;font-size:11.5px;">Clear slot</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sbar">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Ready</span>
+          <span>Prologix Ethernet v01.06.06.00</span>
+          <span>Hardware strict</span>
+          <span class="spring"></span>
+          <span>Clients 0</span>
+          <span class="mono-pane">127.0.0.1</span>
+        </div>
+
+      </div>
+    </div>
+    <p class="caption"><strong>Note the toolbar grouping.</strong> Lifecycle (Start / Stop / Restart), then verification, then export — separated by rules. Stop renders disabled rather than hidden, so the control set never reflows.</p>
+  </section>
+
+  <!-- ============ SCREEN 2 — Traffic Snoop (dark) ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>Traffic Snoop — dark</h2>
+      <p>Where density earns its keep. Banded rows, tabular figures and a mono payload column make a fast-scrolling feed legible.</p>
+    </div>
+
+    <div class="stage" style="margin-top:20px;">
+      <div class="win dark">
+
+        <div class="tbar">
+          <div class="mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></div>
+          <div class="tt">BenchForge Studio — Prologix Ethernet v01.06.06.00</div>
+          <div class="caps"><span>&#8210;</span><span>&#9633;</span><span>&#10005;</span></div>
+        </div>
+
+        <div class="mbar">
+          <span>File</span><span>Edit</span><span class="act">View</span>
+          <span>Emulator</span><span>Tools</span><span>Help</span>
+        </div>
+
+        <div class="tools">
+          <button class="btn danger"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Stop</button>
+          <div class="sep"></div>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 5v14M15 5v14"/></svg>Pause</button>
+          <button class="btn ghost">Clear</button>
+          <button class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4M4 19h16"/></svg>Save capture</button>
+          <div class="sep"></div>
+          <div class="sel" style="width:150px;height:24px;font-size:11.5px;">All directions<span class="chev">&#9662;</span></div>
+          <div class="spring"></div>
+          <div class="led on"><span class="bulb"></span> Running <span class="port">127.0.0.1:1234</span></div>
+        </div>
+
+        <div class="body">
+          <nav class="rail">
+            <div class="grp">Emulate</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 10v4M11 10v4M15 10v4"/></svg>Adapter &amp; Presets</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Device Parser<span class="tally">2</span></div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Settings Generator</div>
+            <div class="grp">Verify</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/></svg>Validation &amp; Stress</div>
+            <div class="nav sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Traffic Snoop<span class="tally">418</span></div>
+          </nav>
+
+          <div class="content">
+            <div class="page-h">
+              <h4>Traffic Snoop</h4>
+              <div class="sub">Live capture across both listeners</div>
+            </div>
+
+            <div class="tiles">
+              <div class="tile"><div class="k">Throughput</div><div class="v">7 358<span class="u">q/s</span></div></div>
+              <div class="tile ok"><div class="k">Avg latency</div><div class="v">0.12<span class="u">ms</span></div></div>
+              <div class="tile"><div class="k">P95</div><div class="v">0.22<span class="u">ms</span></div></div>
+              <div class="tile"><div class="k">Sockets</div><div class="v">1<span class="u">active</span></div></div>
+            </div>
+
+            <div class="card" style="padding:9px 10px 4px;">
+              <div class="ch" style="margin-bottom:8px;"><h5>Packet feed</h5><div class="hint">Newest first · 500-row buffer</div></div>
+              <table class="grid">
+                <thead>
+                  <tr>
+                    <th style="width:84px;">Time<span class="sort">&#9660;</span></th>
+                    <th style="width:50px;">Dir</th>
+                    <th style="width:60px;">Slot</th>
+                    <th>Payload</th>
+                    <th style="width:66px; text-align:right;">ms</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="hl"><td class="mono dim">17:04:22.318</td><td><span class="dir out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h13M13 6l6 6-6 6"/></svg>OUT</span></td><td><span class="addr">1</span></td><td class="mono">HEWLETT-PACKARD,34401A,0,10-1-1</td><td class="num">0.09</td></tr>
+                  <tr><td class="mono dim">17:04:22.318</td><td><span class="dir in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H6M11 6l-6 6 6 6"/></svg>IN</span></td><td><span class="addr">1</span></td><td class="mono">*IDN?</td><td class="num dim">&mdash;</td></tr>
+                  <tr><td class="mono dim">17:04:22.301</td><td><span class="dir out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h13M13 6l6 6-6 6"/></svg>OUT</span></td><td><span class="addr">1</span></td><td class="mono">4.998968</td><td class="num">0.11</td></tr>
+                  <tr><td class="mono dim">17:04:22.300</td><td><span class="dir in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H6M11 6l-6 6 6 6"/></svg>IN</span></td><td><span class="addr">1</span></td><td class="mono">:MEAS:VOLT:DC? 10,0.001</td><td class="num dim">&mdash;</td></tr>
+                  <tr><td class="mono dim">17:04:22.287</td><td><span class="dir in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H6M11 6l-6 6 6 6"/></svg>IN</span></td><td><span class="addr mute">&mdash;</span></td><td class="mono">++addr 1</td><td class="num dim">&mdash;</td></tr>
+                  <tr><td class="mono dim">17:04:22.286</td><td><span class="dir out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h13M13 6l6 6-6 6"/></svg>OUT</span></td><td><span class="addr mute">&mdash;</span></td><td class="mono">Prologix GPIB-ETHERNET Controller version 01.06.06.00</td><td class="num">0.07</td></tr>
+                  <tr><td class="mono dim">17:04:22.285</td><td><span class="dir in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H6M11 6l-6 6 6 6"/></svg>IN</span></td><td><span class="addr mute">&mdash;</span></td><td class="mono">++ver</td><td class="num dim">&mdash;</td></tr>
+                  <tr><td class="mono dim">17:04:22.271</td><td><span class="dir out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h13M13 6l6 6-6 6"/></svg>OUT</span></td><td><span class="addr">2</span></td><td class="mono">FLUKE,PM6690,0,v1.20</td><td class="num">0.10</td></tr>
+                  <tr><td class="mono dim">17:04:22.270</td><td><span class="dir in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H6M11 6l-6 6 6 6"/></svg>IN</span></td><td><span class="addr">2</span></td><td class="mono">*IDN?</td><td class="num dim">&mdash;</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="sbar">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="var(--w-good)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Capturing</span>
+          <span>Prologix Ethernet v01.06.06.00</span>
+          <span>Hardware strict</span>
+          <span class="spring"></span>
+          <span>Clients 1</span>
+          <span class="mono-pane">418 packets</span>
+        </div>
+
+      </div>
+    </div>
+    <p class="caption"><strong>The slot chip greys out for controller commands.</strong> <code class="inl">++ver</code> and <code class="inl">++addr</code> aren't addressed to an instrument — the current grid prints <code class="inl">GPIB::1</code> regardless, which is quietly false.</p>
+  </section>
+
+  <!-- ============ SCREEN 3 — Validation (light) ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>Validation &amp; Stress — light</h2>
+      <p>Verdict first, evidence below. The current build prints a wall of monospace log; this makes the answer readable from across the room and keeps the detail one row away.</p>
+    </div>
+
+    <div class="stage" style="margin-top:20px;">
+      <div class="win light">
+
+        <div class="tbar">
+          <div class="mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></div>
+          <div class="tt">BenchForge Studio — Prologix Ethernet v01.06.06.00</div>
+          <div class="caps"><span>&#8210;</span><span>&#9633;</span><span>&#10005;</span></div>
+        </div>
+
+        <div class="mbar">
+          <span>File</span><span>Edit</span><span>View</span>
+          <span>Emulator</span><span class="act">Tools</span><span>Help</span>
+        </div>
+
+        <div class="tools">
+          <button class="btn danger"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Stop</button>
+          <div class="sep"></div>
+          <button class="btn accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Run validation</button>
+          <div class="sel" style="width:168px;height:24px;font-size:11.5px;">Latency &amp; QPS burst<span class="chev">&#9662;</span></div>
+          <button class="btn">Run benchmark</button>
+          <div class="sep"></div>
+          <button class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4M4 19h16"/></svg>Export report</button>
+          <div class="spring"></div>
+          <div class="led on"><span class="bulb"></span> Running <span class="port">127.0.0.1:1234</span></div>
+        </div>
+
+        <div class="body">
+          <nav class="rail">
+            <div class="grp">Emulate</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 10v4M11 10v4M15 10v4"/></svg>Adapter &amp; Presets</div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Device Parser<span class="tally">2</span></div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Settings Generator</div>
+            <div class="grp">Verify</div>
+            <div class="nav sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/></svg>Validation &amp; Stress<span class="tally">12</span></div>
+            <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Traffic Snoop</div>
+          </nav>
+
+          <div class="content">
+            <div class="page-h">
+              <h4>Validation &amp; Stress</h4>
+              <div class="sub">Protocol parity against the empirical hardware profile</div>
+            </div>
+
+            <div class="cols" style="grid-template-columns:.85fr 1.15fr;">
+              <div class="card" style="border-left:3px solid var(--w-good);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="var(--w-good)" stroke-width="2.4"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.4l3.2 3.2 6-6.6"/></svg>
+                  <div>
+                    <div style="font-size:15px;font-weight:650;color:var(--w-good);line-height:1.25;">All checks passed</div>
+                    <div style="font-size:11.5px;color:var(--w-ink-2);">12 of 12 &middot; hardware strict &middot; probe slot 1 &middot; 1.24 s</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="padding-bottom:8px;">
+                <div class="ch"><h5>Latency &amp; throughput</h5><div class="hint">2 000 queries</div></div>
+                <div class="tiles" style="grid-template-columns:repeat(3,1fr);">
+                  <div class="tile"><div class="k">Throughput</div><div class="v">7 358<span class="u">q/s</span></div></div>
+                  <div class="tile ok"><div class="k">Avg</div><div class="v">0.12<span class="u">ms</span></div></div>
+                  <div class="tile"><div class="k">P95</div><div class="v">0.22<span class="u">ms</span></div></div>
+                </div>
+                <svg class="spark" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true">
+                  <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0f6cbd" stop-opacity=".22"/><stop offset="100%" stop-color="#0f6cbd" stop-opacity="0"/>
+                  </linearGradient></defs>
+                  <path d="M0 22 L20 20 L40 23 L60 18 L80 21 L100 16 L120 20 L140 14 L160 19 L180 12 L200 17 L220 10 L240 15 L260 9 L280 13 L300 8 L300 30 L0 30 Z" fill="url(#sg)"/>
+                  <path d="M0 22 L20 20 L40 23 L60 18 L80 21 L100 16 L120 20 L140 14 L160 19 L180 12 L200 17 L220 10 L240 15 L260 9 L280 13 L300 8" fill="none" stroke="#0f6cbd" stroke-width="1.4"/>
+                  <circle cx="300" cy="8" r="2.4" fill="#0f6cbd"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="card" style="padding:9px 10px 4px;">
+              <div class="ch" style="margin-bottom:8px;"><h5>Protocol checks</h5><div class="hint">Prologix Ethernet &middot; 01.06.06.00</div></div>
+              <table class="grid">
+                <thead><tr><th style="width:58px;">ID</th><th>Assertion</th><th style="width:172px;">Observed</th><th style="width:66px;">Result</th></tr></thead>
+                <tbody>
+                  <tr class="vrow"><td class="mono">PR-01</td><td>Exact <code class="inl">++ver</code> hardware signature</td><td class="mono dim">01.06.06.00</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">PR-03</td><td>Silent acknowledgement on setting change</td><td class="mono dim">0 bytes</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">PR-05</td><td>Manual read buffering under <code class="inl">++auto 0</code></td><td class="mono dim">buffered</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">PR-08</td><td>Parameterized query returns measurement</td><td class="mono dim">5.001544</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">PR-09</td><td>Unmapped slot times out rather than answering</td><td class="mono dim">timeout</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">PR-11</td><td>Secondary addressing echoed correctly</td><td class="mono dim">1 96</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                  <tr class="vrow"><td class="mono">LXI-01</td><td>Raw SCPI socket responds on 5025</td><td class="mono dim">HEWLETT-PACKARD&hellip;</td><td><span class="vd pass"><span class="dot"></span>Pass</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="sbar">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="var(--w-good)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Suite complete</span>
+          <span>Finished in 1.24 s</span>
+          <span>Probe slot 1</span>
+          <span class="spring"></span>
+          <span class="mono-pane">12 / 12</span>
+        </div>
+
+      </div>
+    </div>
+    <p class="caption"><strong>A failing row flips its left stripe to red</strong> and gains an expected-vs-actual expander. Severity lives in the shape of the row, not only in the word at the end of it.</p>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>Component set</h2>
+      <p>Every state you'll write as QSS, both themes.</p>
+    </div>
+
+    <div class="board" style="margin-top:20px;">
+      <div class="spec demo light">
+        <div class="st">Buttons — light</div>
+        <div class="row"><span class="lbl">Primary</span><button class="btn accent">Start</button></div>
+        <div class="row"><span class="lbl">Default</span><button class="btn">Run validation</button></div>
+        <div class="row"><span class="lbl">Danger</span><button class="btn danger">Stop</button></div>
+        <div class="row"><span class="lbl">Ghost</span><button class="btn ghost">Clear</button></div>
+        <div class="row"><span class="lbl">Disabled</span><button class="btn" style="opacity:.5;">Stop</button></div>
+      </div>
+
+      <div class="spec demo dark">
+        <div class="st" style="color:#6c7e8b;border-color:#29333c;">Buttons — dark</div>
+        <div class="row"><span class="lbl" style="color:#6c7e8b;">Primary</span><button class="btn accent">Start</button></div>
+        <div class="row"><span class="lbl" style="color:#6c7e8b;">Default</span><button class="btn">Run validation</button></div>
+        <div class="row"><span class="lbl" style="color:#6c7e8b;">Danger</span><button class="btn danger">Stop</button></div>
+        <div class="row"><span class="lbl" style="color:#6c7e8b;">Ghost</span><button class="btn ghost">Clear</button></div>
+        <div class="row"><span class="lbl" style="color:#6c7e8b;">Disabled</span><button class="btn" style="opacity:.5;">Stop</button></div>
+      </div>
+
+      <div class="spec demo light">
+        <div class="st">Status indicator</div>
+        <div class="row"><div class="led off"><span class="bulb"></span> Stopped <span class="port">1234 / 5025</span></div></div>
+        <div class="row"><div class="led on"><span class="bulb"></span> Running <span class="port">127.0.0.1:1234</span></div></div>
+      </div>
+
+      <div class="spec demo dark">
+        <div class="st" style="color:#6c7e8b;border-color:#29333c;">Status — dark</div>
+        <div class="row"><div class="led off"><span class="bulb"></span> Stopped <span class="port">1234 / 5025</span></div></div>
+        <div class="row"><div class="led on"><span class="bulb"></span> Running <span class="port">127.0.0.1:1234</span></div></div>
+      </div>
+
+      <div class="spec demo light">
+        <div class="st">Inputs</div>
+        <div class="row"><span class="lbl">Rest</span><div class="inp" style="width:126px;">127.0.0.1</div></div>
+        <div class="row"><span class="lbl">Focus</span><div class="inp focus" style="width:126px;">1234</div></div>
+        <div class="row"><span class="lbl">Combo</span><div class="sel" style="width:158px;">Hardware strict<span class="chev">&#9662;</span></div></div>
+      </div>
+
+      <div class="spec demo light">
+        <div class="st">Segmented &amp; chips</div>
+        <div class="row"><div class="seg"><div class="on">Hardware strict</div><div>Multi-client</div></div></div>
+        <div class="row" style="gap:7px;">
+          <span class="addr">GPIB 1</span><span class="addr mute">&mdash;</span>
+          <span class="vd pass"><span class="dot"></span>Pass</span><span class="vd fail"><span class="dot"></span>Fail</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ IMPLEMENTATION ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>Building it in Qt</h2>
+      <p>The current <code class="inl">core/gui_qt.py</code> calls <code class="inl">setStyleSheet</code> at roughly a dozen sites, which is why the look drifts between panels. One sheet at <code class="inl">QApplication</code> level fixes that.</p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px; margin-top:20px;">
+
+      <table class="map">
+        <thead><tr><th style="width:32%;">Mockup element</th><th>Qt widget &amp; approach</th></tr></thead>
+        <tbody>
+          <tr><td class="t">Menu bar</td><td class="d"><code class="inl">QMainWindow.menuBar()</code> — you get access keys and the native look for free. Wire <em>Emulator &rarr; Start / Stop</em> to the same <code class="inl">QAction</code>s the toolbar uses.</td></tr>
+          <tr><td class="t">Toolbar + separators</td><td class="d"><code class="inl">QToolBar</code> with <code class="inl">addSeparator()</code>; <code class="inl">setToolButtonStyle(ToolButtonTextBesideIcon)</code>.</td></tr>
+          <tr><td class="t">Navigation rail</td><td class="d"><code class="inl">QListWidget</code>, frameless, <code class="inl">setIconSize(20)</code>. Selection stripe is <code class="inl">::item:selected { border-left: 2px solid accent; }</code>. Replaces <code class="inl">QTabWidget</code>.</td></tr>
+          <tr><td class="t">Status bar panes</td><td class="d"><code class="inl">statusBar().addPermanentWidget()</code> for the right-hand panes; separators come from styling <code class="inl">QStatusBar::item</code>.</td></tr>
+          <tr><td class="t">Status LED</td><td class="d"><code class="inl">QLabel</code> with the dot as rich text. At this glow level a <code class="inl">border</code> ring is enough — no <code class="inl">QGraphicsDropShadowEffect</code> needed any more.</td></tr>
+          <tr><td class="t">Panels</td><td class="d"><code class="inl">QFrame</code> with <code class="inl">objectName("Panel")</code>, styled once via <code class="inl">QFrame#Panel</code>. Never inline.</td></tr>
+          <tr><td class="t">Banded data grid</td><td class="d"><code class="inl">QTableWidget</code> + <code class="inl">setAlternatingRowColors(True)</code>, <code class="inl">setShowGrid(False)</code>, <code class="inl">verticalHeader().hide()</code>, row height 22.</td></tr>
+          <tr><td class="t">Sort carets</td><td class="d"><code class="inl">setSortingEnabled(True)</code> — the header draws its own indicator; just colour it via <code class="inl">QHeaderView::down-arrow</code>.</td></tr>
+          <tr><td class="t">Sparkline</td><td class="d"><code class="inl">QWidget</code> subclass with a <code class="inl">paintEvent</code>: polyline plus filled polygon. About 30 lines.</td></tr>
+        </tbody>
+      </table>
+
+      <div>
+        <h3 style="margin-bottom:10px;">Theme tokens as a Python dict</h3>
+        <pre><span class="c"># core/theme.py — single source of truth, .format() into one QSS string</span>
+
+LIGHT = {
+    <span class="s">"bg"</span>: <span class="s">"#F3F5F7"</span>, <span class="s">"surface"</span>: <span class="s">"#FFFFFF"</span>, <span class="s">"surface2"</span>: <span class="s">"#F7F9FA"</span>,
+    <span class="s">"line"</span>: <span class="s">"#D9E0E6"</span>, <span class="s">"ink"</span>: <span class="s">"#16202A"</span>,     <span class="s">"ink2"</span>: <span class="s">"#485966"</span>,
+    <span class="s">"ink3"</span>: <span class="s">"#788895"</span>, <span class="s">"accent"</span>: <span class="s">"#0F6CBD"</span>,  <span class="s">"accentSf"</span>: <span class="s">"#E8F1FA"</span>,
+    <span class="s">"good"</span>: <span class="s">"#0E7C4A"</span>, <span class="s">"bad"</span>: <span class="s">"#C0392F"</span>,      <span class="s">"warn"</span>: <span class="s">"#9A6700"</span>,
+}
+
+DARK = {
+    <span class="s">"bg"</span>: <span class="s">"#141A1F"</span>, <span class="s">"surface"</span>: <span class="s">"#1B232A"</span>, <span class="s">"surface2"</span>: <span class="s">"#1F2830"</span>,
+    <span class="s">"line"</span>: <span class="s">"#29333C"</span>, <span class="s">"ink"</span>: <span class="s">"#E6ECF1"</span>,     <span class="s">"ink2"</span>: <span class="s">"#A1B1BD"</span>,
+    <span class="s">"ink3"</span>: <span class="s">"#6C7E8B"</span>, <span class="s">"accent"</span>: <span class="s">"#4CABE8"</span>,  <span class="s">"accentSf"</span>: <span class="s">"#172938"</span>,
+    <span class="s">"good"</span>: <span class="s">"#3BD98A"</span>, <span class="s">"bad"</span>: <span class="s">"#FF6B5E"</span>,      <span class="s">"warn"</span>: <span class="s">"#E3B341"</span>,
+}
+
+RADIUS_PANEL, RADIUS_CTL = <span class="s">4</span>, <span class="s">3</span>
+ROW_H, TOOLBAR_H         = <span class="s">22</span>, <span class="s">40</span>
+UI_FONT   = <span class="s">"Segoe UI Variable Text, Segoe UI, sans-serif"</span>
+DATA_FONT = <span class="s">"Cascadia Mono, Consolas, monospace"</span></pre>
+      </div>
+
+      <div class="note">
+        <h3>Four things worth knowing</h3>
+        <ul class="pts">
+          <li><strong>QSS has no <code class="inl">box-shadow</code> and no <code class="inl">color-mix</code>.</strong> Pre-compute tinted borders as literal hex in the dict. At rev 2's colour levels you no longer need shadows anywhere except flyouts.</li>
+          <li><strong>Follow the OS theme.</strong> <code class="inl">QApplication.styleHints().colorScheme()</code> reports light or dark, and <code class="inl">colorSchemeChanged</code> fires when the user flips it — swap the dict, re-apply the sheet.</li>
+          <li><strong>Cascadia Mono may be absent on older Windows 10.</strong> Check <code class="inl">QFontDatabase.families()</code> and fall back to Consolas, which is always present.</li>
+          <li><strong>Enable high-DPI rounding before constructing <code class="inl">QApplication</code></strong>, or 1&nbsp;px hairlines render unevenly at 125% and 150% scaling — and this design leans on hairlines heavily.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>

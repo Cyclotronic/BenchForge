@@ -1,0 +1,14 @@
+# BenchForge Studio - Development & Build Dependencies
+pyinstaller>=5.0.0
+
+# Used by build_exe.py's pre-flight gate. Lint is the check that caught a
+# missing import which passed the whole test suite AND produced a clean build,
+# and would have shipped an executable that died silently at launch. The gate
+# skips it when absent, so leaving it uninstalled quietly removes the most
+# valuable check in the build.
+pyflakes>=3.0.0
+
+# Used by tools/ for hardware verification over VXI-11. Not needed to build or
+# run the emulator -- core/ is pure standard library.
+pyvisa>=1.13.0
+pyvisa-py>=0.7.0
