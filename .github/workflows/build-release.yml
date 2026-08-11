@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -52,7 +52,7 @@ jobs:
           "$hash  BenchForge-Windows.zip" | Set-Content -Encoding ascii dist/BenchForge-Windows.zip.sha256
 
       - name: Preserve Verified Workflow Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: BenchForge-Windows-${{ github.event.release.tag_name }}
           path: |
@@ -62,7 +62,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/BenchForge-Windows.zip
