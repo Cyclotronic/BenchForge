@@ -66,7 +66,7 @@ Where something is inferred rather than measured, the profile says so.
 
 ### Installation
 ```bash
-git clone https://github.com/BenchForge/BenchForge.git
+git clone https://github.com/Cyclotronic/BenchForge.git
 cd BenchForge
 pip install -r requirements.txt
 ```
@@ -85,7 +85,8 @@ python benchforge.py
 ```bash
 python -m unittest discover -s tests
 ```
-*17 suites covering both gateways and the instrument model. No hardware, no GUI toolkit.*
+*24 tests covering the gateways, instrument models, DNS-SD behavior, GUI
+construction, and packaging integration. They require no physical hardware.*
 
 ### Verifying Against Your Own Hardware
 ```bash
@@ -102,13 +103,42 @@ python tools/check_errors.py      --host 192.168.1.80       # drain error queues
 pip install -r requirements-dev.txt
 python build_exe.py
 ```
-*(Produces executable binary under `dist/BenchForge`)*
+*(Produces the distributable application directory under `dist/BenchForge`.
+Keep that entire directory together; `BenchForge.exe` is not a standalone
+single-file build.)*
 
 > [!TIP]
-> **CI/CD Releases:** Every official release published on GitHub automatically triggers a GitHub Actions workflow that builds, packages, and attaches a compiled Windows zip archive (`BenchForge-Windows.zip`) directly to the release assets.
+> **CI/CD Releases:** Every official release published on GitHub automatically
+> triggers a GitHub-hosted Windows build. Static analysis, unit tests, offline
+> fidelity checks, and a frozen-application smoke test must pass before the
+> workflow attaches `BenchForge-Windows.zip` and its SHA-256 checksum.
+
+Official downloads are published through
+[GitHub Releases](https://github.com/Cyclotronic/BenchForge/releases). Release
+binaries are currently **unsigned**, so Windows may display an Unknown
+Publisher or Microsoft Defender SmartScreen warning. Compare the downloaded
+ZIP with the `.sha256` file attached to the same release. See the
+[Code Signing Policy](CODE_SIGNING_POLICY.md) for current status and the future
+SignPath plan.
 
 ---
 
-## 📄 License
+## Project Policies
 
-Distributed under the [MIT License](LICENSE).
+* [Contributing](CONTRIBUTING.md) — development checks and pull-request guidance
+* [Privacy](PRIVACY.md) — listeners, local discovery, and data handling
+* [Security](SECURITY.md) — private vulnerability reporting
+* [Code Signing Policy](CODE_SIGNING_POLICY.md) — release provenance and signing status
+* [Third-party notices](LICENSES/THIRD_PARTY_NOTICES.md) — bundled dependency terms
+
+BenchForge does not collect telemetry, analytics, or crash reports. Network
+listeners and local mDNS advertisements operate only as part of emulator modes
+started by the user.
+
+---
+
+## License
+
+BenchForge source code is distributed under the [MIT License](LICENSE).
+Binary distributions also include the applicable third-party license texts and
+notices in the [`LICENSES`](LICENSES) directory.

@@ -1,0 +1,9 @@
+# Build, release, signing-policy, and dependency changes require owner review.
+/.github/ @Cyclotronic
+/benchforge.spec @Cyclotronic
+/build_exe.py @Cyclotronic
+/CODE_SIGNING_POLICY.md @Cyclotronic
+/LICENSE @Cyclotronic
+/LICENSES/ @Cyclotronic
+
+* @Cyclotronic

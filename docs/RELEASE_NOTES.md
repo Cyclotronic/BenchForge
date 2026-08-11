@@ -72,7 +72,7 @@ expensive to diagnose. That is why the log exists.
 Reproduce any of it:
 
 ```bash
-python -m unittest discover -s tests      # 17 suites, no hardware
+python -m unittest discover -s tests      # 24 tests, no physical hardware
 python tools/verify_offline.py            # 7 fidelity checks, no hardware
 python tools/verify_hardware.py --host <prologix>
 python tools/ab_instruments.py --host <prologix>
