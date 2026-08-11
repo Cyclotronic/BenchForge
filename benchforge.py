@@ -13,9 +13,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from core.gui_qt import BenchForgeQtApp
+from core.resources import resource_path
 from core.version import PROFILES_VERIFIED, __version__
 
 
@@ -36,6 +38,7 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("BenchForge Studio")
     app.setOrganizationName("BenchForge")
+    app.setWindowIcon(QIcon(resource_path("assets", "benchforge-icon.png")))
 
     window = BenchForgeQtApp()
     window.show()

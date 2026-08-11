@@ -10,58 +10,10 @@ import socket
 import threading
 from typing import Optional
 from .device_emulator import InstrumentRegistry
-from .netutil import create_tcp_listener, create_multicast_listener
+from .mdns import GatewayDiscoveryResponder
+from .netutil import create_tcp_listener
 
-
-class LXIDiscoveryResponder:
-    """LXI mDNS / UDP Discovery Responder broadcasting LXI services on UDP port 5353."""
-
-    MDNS_PORT = 5353
-    MDNS_GROUP = "224.0.0.251"
-
-    def __init__(self, host_name: str = "tc-lxi-emulator", model_name: str = "Keysight 34461A"):
-        self.host_name = host_name
-        self.model_name = model_name
-        self._is_running = False
-        self._udp_sock: Optional[socket.socket] = None
-
-    def start(self):
-        if self._is_running:
-            return
-        try:
-            # Multicast deliberately keeps address sharing: mDNS responders
-            # are expected to coexist with Bonjour and friends on 5353.
-            self._udp_sock = create_multicast_listener(self.MDNS_PORT, self.MDNS_GROUP)
-            self._is_running = True
-
-            t = threading.Thread(target=self._listen_loop, daemon=True, name="LXIDiscoveryResponder")
-            t.start()
-            print(f"[LXIDiscoveryResponder] LXI mDNS Discovery Active on UDP Port {self.MDNS_PORT}")
-        except Exception as e:
-            print(f"[LXIDiscoveryResponder] mDNS bind notice: {e} (Standard on restricted permission environments)")
-
-    def stop(self):
-        self._is_running = False
-        if self._udp_sock:
-            try:
-                self._udp_sock.close()
-            except Exception:
-                pass
-            self._udp_sock = None
-
-    def _listen_loop(self):
-        while self._is_running and self._udp_sock:
-            try:
-                data, addr = self._udp_sock.recvfrom(2048)
-                if not data:
-                    break
-                # Respond to LXI query packets containing _lxi or _scpi-raw
-                if b"_lxi" in data or b"_scpi-raw" in data or b"_vxi-11" in data:
-                    resp = f"LXI_EMULATOR;MODEL={self.model_name};MAC=00:30:D3:07:A4:C6;PORT=5025\n".encode("utf-8")
-                    self._udp_sock.sendto(resp, addr)
-            except Exception:
-                if not self._is_running:
-                    break
+LXIDiscoveryResponder = GatewayDiscoveryResponder
 
 
 class LXIRawSocketServer:

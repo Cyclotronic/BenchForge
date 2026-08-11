@@ -20,10 +20,10 @@ import threading
 import time
 from typing import Dict, Any, List
 
-from PySide6.QtCore import Qt, QPointF, QSize, QTimer, QSettings
+from PySide6.QtCore import Qt, QPointF, QSize, QTimer, QSettings, QUrl
 from PySide6.QtGui import (
     QAction, QBrush, QColor, QFont, QKeySequence, QLinearGradient,
-    QPainter, QPen, QPolygonF
+    QDesktopServices, QIcon, QPainter, QPen, QPolygonF
 )
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -38,6 +38,7 @@ from . import theme
 
 from .diagnostics import format_record
 from .prologix_emulator import PrologixEmulatorServer
+from .resources import resource_path
 from .version import __version__
 from .vxi11_emulator import VXI11EmulatorServer
 
@@ -193,6 +194,7 @@ class BenchForgeQtApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon(resource_path("assets", "benchforge-icon.png")))
 
         # The version belongs in the title bar: a tester reporting a problem
         # can read it off a screenshot, and the packaged app is windowed so the
@@ -470,6 +472,14 @@ class BenchForgeQtApp(QMainWindow):
         self.act_about = QAction("&About BenchForge Studio", self)
         self.act_about.triggered.connect(self._show_about)
 
+        self.act_licenses = QAction("View &Licenses and Notices", self)
+        self.act_licenses.triggered.connect(self._open_license_notice)
+
+        self.act_qt_source = QAction("Qt for Python &Source", self)
+        self.act_qt_source.triggered.connect(
+            lambda _checked=False: QDesktopServices.openUrl(QUrl(
+                "https://code.qt.io/cgit/pyside/pyside-setup.git/")))
+
     def _build_menubar(self):
         mb = self.menuBar()
 
@@ -496,6 +506,8 @@ class BenchForgeQtApp(QMainWindow):
 
         m_help = mb.addMenu("&Help")
         m_help.addAction(self.act_about)
+        m_help.addAction(self.act_licenses)
+        m_help.addAction(self.act_qt_source)
 
     def _build_toolbar(self):
         tb = QToolBar("Main")
@@ -617,13 +629,45 @@ class BenchForgeQtApp(QMainWindow):
         QMessageBox.about(
             self,
             "About BenchForge Studio",
-            "<b>BenchForge Studio</b><br>"
+            f"<b>BenchForge Studio {__version__}</b><br>"
             "Universal Bench Instrument &amp; Gateway Emulator Suite<br><br>"
             "Emulates Prologix Ethernet (1234), LXI SCPI raw socket (5025) "
             "and LXI mDNS discovery (5353).<br><br>"
-            "MIT licensed. Built with Qt for Python (PySide6, LGPL v3).",
+            "BenchForge Studio is MIT licensed.<br>"
+            "Uses Qt for Python (PySide6) and Qt 6 under LGPL v3.<br>"
+            "Copyright &copy; The Qt Company Ltd. and Qt contributors.<br><br>"
+            "Complete license texts, third-party notices, and matching-source "
+            "information are available from <b>Help &rarr; View Licenses and "
+            "Notices</b>.",
         )
 
+    @staticmethod
+    def _license_notice_path():
+        """Return the local third-party notice in source and frozen layouts."""
+        candidates = []
+        if getattr(sys, "frozen", False):
+            exe_dir = os.path.dirname(sys.executable)
+            candidates.append(os.path.join(
+                exe_dir, "LICENSES", "THIRD_PARTY_NOTICES.md"))
+            bundle_dir = getattr(sys, "_MEIPASS", exe_dir)
+            candidates.append(os.path.join(
+                bundle_dir, "licenses", "THIRD_PARTY_NOTICES.md"))
+        candidates.append(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "LICENSES", "THIRD_PARTY_NOTICES.md"))
+        return next((path for path in candidates if os.path.isfile(path)), None)
+
+    def _open_license_notice(self):
+        path = self._license_notice_path()
+        if path and QDesktopServices.openUrl(QUrl.fromLocalFile(path)):
+            return
+        QMessageBox.warning(
+            self,
+            "License Notices Not Found",
+            "The local third-party notice could not be opened. Reinstall the "
+            "complete BenchForge distribution; license files should be in the "
+            "LICENSES folder beside BenchForge.exe.",
+        )
     @staticmethod
     def _style_table(table: QTableWidget):
         """Shared data-grid conventions: banded rows, compact, no grid lines."""
@@ -1323,6 +1367,13 @@ class BenchForgeQtApp(QMainWindow):
                     self.mode_cb.blockSignals(False)
                 return
 
+        engine_was_running = (self.server._is_running or
+                              self.lxi_raw_server._is_running or
+                              self.lxi_discovery._is_running or
+                              self.vxi11_server._running)
+        if engine_was_running:
+            self._stop_servers()
+
         self._previous_preset = mode
         self.registry.devices.clear()
 
@@ -1337,7 +1388,6 @@ class BenchForgeQtApp(QMainWindow):
             self._set_gateway_class(PrologixEmulatorServer)
             # The bench that is physically on this gateway.
             self._populate_bench()
-            self.lxi_discovery.model_name = "Keysight E5810A Gateway"
             self.lxi_raw_server.default_address = slot_for("Agilent 34411A", 5)
         else:
             self.port_lbl.show()
@@ -1348,16 +1398,16 @@ class BenchForgeQtApp(QMainWindow):
             if "Prologix Ethernet" in mode:
                 self._set_gateway_class(PrologixEmulatorServer)
                 self._populate_bench()          # the full default bench
-                self.lxi_discovery.model_name = "Prologix Ethernet Gateway"
                 self.lxi_raw_server.default_address = slot_for("Keithley 2002", 1)
             elif "AR488" in mode:
                 self._set_gateway_class(AR488EmulatorServer)
                 self._populate_bench()
-                self.lxi_discovery.model_name = "AR488 GPIB Gateway"
                 self.lxi_raw_server.default_address = slot_for("Keithley 2002", 1)
 
         self._refresh_device_table()
         self.statusBar().showMessage(f"Applied emulation mode: {mode}", 5000)
+        if engine_was_running:
+            self._start_servers()
 
     def _update_impairments(self, val):
         self.delay_lbl.setText(f"{val} ms")
@@ -1667,20 +1717,25 @@ class BenchForgeQtApp(QMainWindow):
             self.lxi_raw_server.port = l_port
             try:
                 self.lxi_raw_server.start()
-                self.lxi_discovery.start()
-                # The E5810A's real interface is VXI-11 over ONC-RPC, not a raw
-                # SCPI socket. Binding 111 can need privileges, so a failure
-                # here degrades to the raw socket rather than killing the mode.
+                # The E5810A's real interface is VXI-11 over ONC-RPC. If that
+                # listener fails, raw SCPI remains available and DNS-SD must
+                # not publish a VXI-11 endpoint that did not bind.
                 self.vxi11_server.host = self.host_input.text()
+                vxi11_port = self.vxi11_server.core_port
                 try:
                     self.vxi11_server.start()
                 except Exception as exc:
+                    self.vxi11_server.stop()
+                    vxi11_port = None
                     self.vxi11_server.diagnose(
                         "ERROR", "VXI-11 listener could not bind",
-                        "%s -- ports %d/%d. Port 111 may need elevated "
-                        "privileges or be held by another RPC service."
+                        "%s -- ports %d/%d. Check for an RPC service or port "
+                        "conflict and review Windows firewall policy."
                         % (exc, self.vxi11_server.portmap_port,
                            self.vxi11_server.core_port))
+                self.lxi_discovery.configure_lxi(
+                    self.host_input.text(), l_port, vxi11_port)
+                self.lxi_discovery.start()
             except Exception as e:
                 err1 = e
         else:
@@ -1688,7 +1743,12 @@ class BenchForgeQtApp(QMainWindow):
             self.server.host = self.host_input.text()
             self.server.port = p_port
             try:
+                if "AR488" in mode:
+                    self.lxi_discovery.configure_ar488(self.host_input.text(), p_port)
+                else:
+                    self.lxi_discovery.configure_prologix(self.host_input.text(), p_port)
                 self.server.start()
+                self.lxi_discovery.start()
             except Exception as e:
                 err1 = e
 
@@ -1726,7 +1786,8 @@ class BenchForgeQtApp(QMainWindow):
             self.statusBar().showMessage(f"Engine running: Gateway Port {p_port}.", 4000)
 
     def _stop_servers(self):
-        if not (self.server._is_running or self.lxi_raw_server._is_running):
+        if not (self.server._is_running or self.lxi_raw_server._is_running or
+                self.lxi_discovery._is_running or self.vxi11_server._running):
             return
         self.server.stop()
         self.lxi_raw_server.stop()

@@ -54,6 +54,14 @@ a = Analysis(
         # file the running app reads; tools/verify_frozen_build.py asserts it
         # arrives intact at 1879 bytes, because a missing one fails silently.
         ('core/prologix_help.txt', 'core'),
+        # License texts and third-party notices must travel with every binary
+        # distribution. Keeping these as loose files also makes the LGPL terms
+        # and Qt DLL replacement path visible to recipients.
+        ('LICENSE', 'licenses'),
+        ('LICENSES', 'licenses'),
+        # Runtime Qt icon plus the original Windows icon resource.
+        ('assets/benchforge-icon.png', 'assets'),
+        ('assets/benchforge-icon.ico', 'assets'),
         # NOTE: core/sample_devices is deliberately NOT bundled. Nothing in
         # core/ reads it -- only the test suite does -- so shipping it would
         # put test fixtures in a release binary.
@@ -91,6 +99,7 @@ exe = EXE(
     # credibility than the few MB compression saves.
     upx=False,
     console=False,
+    icon='assets/benchforge-icon.ico',
     version=version_info,
     disable_windowed_traceback=False,
     argv_emulation=False,

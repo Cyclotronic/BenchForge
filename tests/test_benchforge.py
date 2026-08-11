@@ -20,7 +20,7 @@ from core.device_emulator import (
     InstrumentRegistry, VirtualInstrument, DEFAULT_BENCH, UNDRIVEN_INSTRUMENTS
 )
 from core.prologix_emulator import PrologixEmulatorServer
-from core.vxi11_lxi_emulator import LXIRawSocketServer
+from core.vxi11_lxi_emulator import LXIDiscoveryResponder, LXIRawSocketServer
 
 
 def bench_spec(name):
@@ -147,6 +147,92 @@ class TestBenchForge(unittest.TestCase):
             lxi_server.stop()
 
 
+    @staticmethod
+    def _dns_records(packet):
+        _ident, flags, questions, answers, authorities, additionals = struct.unpack(
+            ">HHHHHH", packet[:12])
+        offset = 12
+        for _ in range(questions):
+            _name, offset = LXIDiscoveryResponder._read_name(packet, offset)
+            offset += 4
+        records = []
+        for _ in range(answers + authorities + additionals):
+            name, offset = LXIDiscoveryResponder._read_name(packet, offset)
+            record_type, record_class, ttl, length = struct.unpack(
+                ">HHIH", packet[offset:offset + 10])
+            offset += 10
+            data = packet[offset:offset + length]
+            offset += length
+            records.append((name, record_type, record_class, ttl, data))
+        return flags, records
+
+    def test_06_mdns_advertises_the_selected_persona(self):
+        responder = LXIDiscoveryResponder(host_name="benchforge-test")
+        responder.configure_prologix("127.0.0.1", 1234)
+        flags, records = self._dns_records(responder.build_announcement())
+        self.assertEqual(flags, 0x8400)
+        names = {record[0] for record in records}
+        self.assertIn("_prologix-gpib._tcp.local.", names)
+        self.assertNotIn("_lxi._tcp.local.", names)
+        srv = next(record for record in records
+                   if record[1] == responder.TYPE_SRV)
+        self.assertEqual(struct.unpack(">HHH", srv[4][:6])[2], 1234)
+        self.assertTrue(srv[2] & responder.CACHE_FLUSH)
+
+        # A loopback listener is not reachable by other hosts and must never
+        # publish 127.0.0.1 onto the LAN.
+        responder.start()
+        self.assertFalse(responder._is_running)
+
+        responder.configure_ar488("127.0.0.1", 8488)
+        _flags, records = self._dns_records(responder.build_announcement())
+        names = {record[0] for record in records}
+        self.assertIn("_ar488-gpib._tcp.local.", names)
+        self.assertNotIn("_prologix-gpib._tcp.local.", names)
+        responder.configure_lxi("127.0.0.1", raw_port=5025, vxi11_port=1024)
+        _flags, records = self._dns_records(responder.build_announcement())
+        ptr_names = {record[0] for record in records
+                     if record[1] == responder.TYPE_PTR}
+        self.assertEqual(ptr_names, {
+            "_lxi._tcp.local.",
+            "_scpi-raw._tcp.local.",
+            "_vxi-11._tcp.local.",
+        })
+        txt_records = [record for record in records
+                       if record[1] == responder.TYPE_TXT]
+        self.assertEqual(len(txt_records), 3)
+        for record in txt_records:
+            first_length = record[4][0]
+            self.assertEqual(record[4][1:1 + first_length], b"txtvers=1")
+            self.assertIn(b"Manufacturer=BenchForge", record[4])
+            self.assertIn(b"Model=Keysight E5810A", record[4])
+
+    def test_07_mdns_answers_dns_sd_queries_and_ignores_unrelated_names(self):
+        responder = LXIDiscoveryResponder(host_name="benchforge-test")
+        responder.configure_lxi("127.0.0.1", raw_port=5025, vxi11_port=1024)
+
+        def query(name, qtype, qclass=1, ident=0):
+            return (struct.pack(">HHHHHH", ident, 0, 1, 0, 0, 0)
+                    + responder._encode_name(name)
+                    + struct.pack(">HH", qtype, qclass))
+
+        reply, unicast = responder.response_for_query(query(
+            responder.SERVICE_ENUMERATION, responder.TYPE_PTR,
+            responder.CLASS_IN | responder.CACHE_FLUSH, ident=0x1234))
+        self.assertTrue(unicast)
+        ident, flags, _questions, answers, _auth, additional = struct.unpack(
+            ">HHHHHH", reply[:12])
+        self.assertEqual(ident, 0x1234)
+        self.assertEqual(flags, 0x8400)
+        self.assertEqual(answers, 6)  # enumeration PTR + instance PTR per service
+        self.assertEqual(additional, 7)  # SRV/TXT per service + one A record
+        self.assertIsNone(responder.response_for_query(query(
+            "_http._tcp.local.", responder.TYPE_PTR)))
+
+        _flags, goodbye = self._dns_records(
+            responder.build_announcement(goodbye=True))
+        self.assertTrue(goodbye)
+        self.assertTrue(all(record[3] == 0 for record in goodbye))
     def test_06_serial_poll_mav_lifecycle(self):
         """
         ++spoll must report the MAV bit so a driver's read loop knows data is
@@ -1181,6 +1267,14 @@ class TestBenchForge(unittest.TestCase):
             # Defaults, not whatever was last used.
             self.assertIn("Prologix", window.mode_cb.currentText())
             self.assertGreaterEqual(len(window.registry.devices), 4)
+            # License attribution must be discoverable from the installed UI,
+            # with a real local notice rather than only a web link.
+            self.assertTrue(window.act_licenses.isVisible())
+            self.assertTrue(window.act_qt_source.isVisible())
+            self.assertFalse(window.windowIcon().isNull())
+            notice = window._license_notice_path()
+            self.assertIsNotNone(notice)
+            self.assertTrue(os.path.isfile(notice))
 
             # A diagnostic must survive the real callback path onto the table.
             window._on_diagnostic_callback({

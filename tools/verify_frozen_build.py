@@ -94,6 +94,28 @@ if found_at:
           "%d vs %d bytes" % (len(bundled), len(expected_help)))
 
 # ---------------------------------------------------------------------------
+REQUIRED_LICENSE_FILES = (
+    "LICENSE",
+    "GPL-3.0.txt",
+    "LGPL-3.0.txt",
+    "Python-Software-Foundation.txt",
+    "THIRD_PARTY_NOTICES.md",
+)
+license_roots = (os.path.join(bundle_dir, "LICENSES"),
+                 os.path.join(bundle_dir, "_internal", "licenses"),
+                 os.path.join(bundle_dir, "licenses"))
+license_root = next((path for path in license_roots if os.path.isdir(path)), None)
+check("license directory present in bundle", license_root is not None,
+      license_root or "not found under %s" % bundle_dir)
+for name in REQUIRED_LICENSE_FILES:
+    found = bool(license_root and os.path.isfile(os.path.join(license_root, name)))
+    check("license file: %s" % name, found)
+for name in ("benchforge-icon.png", "benchforge-icon.ico"):
+    candidates = (os.path.join(bundle_dir, "_internal", "assets", name),
+                  os.path.join(bundle_dir, "assets", name))
+    found = next((path for path in candidates if os.path.isfile(path)), None)
+    check("application icon: %s" % name, found is not None,
+          found or "not found under %s" % bundle_dir)
 print("\n=== staging ===")
 staged_dir = None
 if args.copy_local == "always" or (args.copy_local == "auto"

@@ -20,6 +20,7 @@ After building, verify the BUNDLE, not just the source tree:
 import argparse
 import importlib.util
 import os
+import shutil
 import subprocess
 import sys
 
@@ -96,6 +97,14 @@ def build():
         return result.returncode
 
     dist = os.path.join(SCRIPT_DIR, "dist", "BenchForge")
+    # PyInstaller places collected data under _internal. Keep that copy for
+    # runtime lookup, and add a conspicuous top-level LICENSES directory for
+    # recipients browsing the portable distribution.
+    license_dist = os.path.join(dist, "LICENSES")
+    shutil.copytree(os.path.join(SCRIPT_DIR, "LICENSES"), license_dist,
+                    dirs_exist_ok=True)
+    shutil.copy2(os.path.join(SCRIPT_DIR, "LICENSE"),
+                 os.path.join(license_dist, "LICENSE"))
     print("\n[+] Build succeeded: %s" % dist)
     print("\n    A successful build does NOT mean the bundle works. Data files")
     print("    can be missing from the spec and fail silently. Verify it:")
