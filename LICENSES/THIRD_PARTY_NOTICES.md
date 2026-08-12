@@ -57,6 +57,43 @@ an application runtime dependency.
 
 Source and license: https://github.com/pyinstaller/pyinstaller
 
+## Referenced projects — no code included
+
+The two projects below are **not** bundled, linked, or redistributed in any
+form. They are named here because BenchForge's documentation refers to them and
+because being explicit about what was and was not copied is the point of a
+notices file.
+
+### AR488 Arduino GPIB controller
+
+The AR488 emulation persona was written from the observable behaviour of the
+AR488 firmware by John Chajecki (`Twilight-Logic/AR488`, ver. 0.53.46), which is
+published under the **GNU General Public License v3.0** — see `GPL-3.0.txt`.
+
+`profiles/AR488_ADAPTER_PROFILE.md` quotes one short function from that firmware
+for reference and identification, with attribution at the quotation. No AR488
+code is present in BenchForge, and none is compiled into any build: the persona
+implements the command vocabulary, error strings, argument ranges and
+terminators the firmware documents, written independently.
+
+That profile is marked source-derived and has never been checked against a
+physical adapter.
+
+### TestController
+
+TestController is third-party closed-source software, and BenchForge is
+developed to be a faithful gateway for it to talk to.
+
+`docs/TESTCONTROLLER_OBSERVATIONS.md` reports interoperability findings about
+its client behaviour. It contains **no TestController source code**: the
+observations are descriptions of behaviour with class, method and line
+references so the maintainer can consult their own source.
+
+Some of those findings came from decompiling the application to understand what
+a client expects on the wire. That was done for interoperability. The decompiled
+output has never been committed to this repository and is not distributed with
+any release. No TestController code is present in BenchForge.
+
 ## No warranty
 
 All components are provided without warranty to the extent permitted by their

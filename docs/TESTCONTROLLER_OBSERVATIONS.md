@@ -60,39 +60,30 @@ cross-delivered: 0
 
 Each response was a single complete `sendall()` of a well-formed message. We could not make the emulator emit a short frame.
 
-### The code we think may be involved
+### Where we think it may come from
 
-In `dk.hkj.comm.SocketInterface`:
+Described rather than quoted — please open your own source at the references
+below. We are deliberately not reproducing your code; see the note at the end
+of this document.
 
-```java
-protected ByteBuffer bb = new ByteBuffer();        // line 27, instance state
+In **`dk.hkj.comm.SocketInterface`**:
 
-public void flush() {                              // line 99  — no `synchronized`
-    this.bb.clear();
-    ...
-}
+| Reference | What we observed about it |
+| :--- | :--- |
+| line 27 | A `ByteBuffer` field, `bb`, held as instance state |
+| `flush()`, line 99 | Clears `bb`. **Not** declared `synchronized` |
+| `read(int)`, line 295 | Declared `synchronized`. Appends into the same `bb`, accumulating until CR/LF |
 
-public synchronized String read(int timeout) {     // line 295 — `synchronized`
-    ...
-    this.bb.append((char)c);                       // accumulates until CR/LF
-    ...
-}
-```
+And in **`dk.hkj.shared.SharedInterfacePrologixUSB`**:
 
-And in `dk.hkj.shared.SharedInterfacePrologixUSB`:
+| Reference | Declared |
+| :--- | :--- |
+| `writeReadBin(...)`, line 69 | **not** `synchronized` — calls `flush()` on the shared interface on entry |
+| `write(...)`, line 80 | `synchronized` |
+| `writeControl(...)`, line 87 | `synchronized` |
+| `read(...)`, line 101 | `synchronized` |
 
-```java
-public byte[] writeReadBin(...) {                  // line 69  — no `synchronized`
-    ...
-    this.ci.flush();
-    ...
-}
-public synchronized boolean write(...)             // line 80  — `synchronized`
-public synchronized void writeControl(...)         // line 87  — `synchronized`
-public synchronized String read(...)               // line 101 — `synchronized`
-```
-
-`read()` is synchronized and `flush()` is not, but both operate on the same `bb`. `writeReadBin()` is not synchronized and calls `flush()` on entry, while its three sibling methods are synchronized.
+So `read()` is synchronized and `flush()` is not, while both operate on the same `bb`; and `writeReadBin()` is the one method of those four that is not synchronized, yet it is the one that calls `flush()`.
 
 If a second device thread enters `writeReadBin()` while the first is part-way through accumulating a message, `bb.clear()` would discard the bytes gathered so far. The first thread would then continue appending and return the tail. That is the shape of what we observe.
 
@@ -169,21 +160,18 @@ measured rather than inferred. We raise it gently all the same.
 
 ### What the code does
 
-`dk.hkj.comm.LXIInterface.open()` creates the VXI-11 link:
+Described rather than quoted; the references are to your own source.
 
-```java
-public synchronized void open() {
-    int port = this.rpc.portmapGetport(395183, 1, 6, this.scpiPort);   // line 55
-    this.lxirpc = new RPC(this.address, port);
-    this.lxirpc.defineCall(395183, 1, 10);                             // create_link
-    int clientId = 10;
-    this.lxirpc.addParam(clientId);
-    this.lxirpc.addParam(0);
-    this.lxirpc.addParam(0);
-    this.lxirpc.addParam("inst0");                                     // line 62
-    ...
-}
-```
+`dk.hkj.comm.LXIInterface.open()` builds the VXI-11 link in this order:
+
+1. **line 55** — resolves the core channel with a portmapper `GETPORT` for
+   program `395183` version `1` over TCP, passing `scpiPort` as the call's
+   fourth argument.
+2. Opens an RPC channel to the returned port and prepares
+   `create_link` — program `395183`, version `1`, procedure `10`.
+3. Appends four arguments in the VXI-11 order: a client identifier of `10`,
+   `lockDevice` of `0`, `lock_timeout` of `0`, and finally the device string.
+4. **line 62** — that device string is the string literal `"inst0"`.
 
 `SharedInterfaceKeysightE5810` reaches this through `LXIInterfaceMulti`, which
 stores the GPIB address as `this.port` and passes it to `LXIInterface.setPort()`.
@@ -298,4 +286,26 @@ If any of this is worth pursuing, we can supply:
 
 And if we have simply misread the code, we would genuinely appreciate being told so — it improves the emulator's fidelity, which is the whole point of the exercise.
 
-Thank you for TestController, and for making the device driver format open enough that an emulator could be built against it at all.
+---
+
+## A note on how we read your source, and what we have not published
+
+These observations came partly from decompiling TestController. We did that for
+one purpose — to understand what a client legitimately expects on the wire, so
+the emulator could be faithful to it rather than guessing.
+
+**This document contains no reproduced TestController source.** Everything
+above is a description of behaviour, with class, method and line references so
+you can open your own code at the relevant point. We removed the decompiled
+excerpts an earlier draft contained, because publishing your source is a
+separate act from reading it for interoperability, and not one we have any
+business doing.
+
+The decompiled tree itself has never been committed to this repository and is
+not distributed with the emulator or any release.
+
+If you would rather we did not cite line numbers either, say so and we will
+reduce this to prose descriptions alone.
+
+Thank you for TestController, and for making the device driver format open
+enough that an emulator could be built against it at all.

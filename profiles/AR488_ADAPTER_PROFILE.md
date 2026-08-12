@@ -38,6 +38,8 @@ The AR488 speaks a Prologix-*like* command set, but the differences are not cosm
 ### Response terminator
 `errorMsg()` and the command handlers all emit through `dataPort.println()`. Arduino's `Print::println()` writes **`\r\n`**, so AR488 controller replies are CRLF-terminated — the same as Prologix. (An earlier reading of this as bare `\n` was wrong; `println()` is not `write('\n')`.)
 
+From `errorMsg()` in `src/AR488/AR488.ino`:
+
 ```c
 void errorMsg(uint8_t err) {
   switch (err) {
@@ -48,6 +50,16 @@ void errorMsg(uint8_t err) {
   }
 }
 ```
+
+> **Source and licence.** Quoted from the AR488 Arduino GPIB controller by
+> John Chajecki (`Twilight-Logic/AR488`), firmware ver. 0.53.46, which is
+> published under the **GNU General Public License v3.0**. Reproduced here for
+> reference and identification; the licence text is in `LICENSES/GPL-3.0.txt`.
+>
+> BenchForge itself is MIT-licensed and contains no AR488 code. This emulator
+> was written from the observable *behaviour* the source describes — command
+> vocabulary, error strings, argument ranges, terminators — not by translating
+> the firmware.
 
 ---
 
@@ -110,17 +122,17 @@ Handled as on Prologix: an escaped CR/LF is buffered as data rather than termina
 
 ## 3. What TestController sends (client side)
 
-From `dk.hkj.shared.SharedInterfaceAR488` in the decompiled reference:
+What `dk.hkj.shared.SharedInterfaceAR488` puts on the wire, by method. This is a
+description of observed behaviour, not quoted source:
 
-```java
-init():            ++default                       // Prologix sends ++auto 0 ; ++mode 1
-writeControl():    ++CLR  ++LLO  ++LOC  ++TRG      // UPPERCASE
-writeReadBin():    escape(msg, 27, "+\r\n")
-                   ++read <eoi|char>
-write():           escape(msg, 27, "+")
-setActualAddress:  ++addr <n>       (only when it changes)
-setActualTimeout:  ++read_tmo_ms <n>
-```
+| Method | What it sends | Note |
+| :--- | :--- | :--- |
+| `init()` | `++default` | the Prologix interface sends `++auto 0` and `++mode 1` instead |
+| `writeControl()` | `++CLR` `++LLO` `++LOC` `++TRG` | **uppercase** |
+| `writeReadBin()` | payload ESC-escaped over `+`, CR and LF, then `++read <eoi\|char>` | |
+| `write()` | payload ESC-escaped over `+` only | |
+| `setActualAddress()` | `++addr <n>` | only when the address changes |
+| `setActualTimeout()` | `++read_tmo_ms <n>` | |
 
 The uppercase control commands only work because the AR488 is case-insensitive — sending those to a Prologix would return `Unrecognized command`.
 
