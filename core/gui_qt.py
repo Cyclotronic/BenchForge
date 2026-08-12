@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QGraphicsDropShadowEffect, QCheckBox
 )
 
+from . import paths
 from . import theme
 
 from .diagnostics import format_record
@@ -244,8 +245,12 @@ class BenchForgeQtApp(QMainWindow):
         self._telemetry_lock = threading.Lock()
         self._previous_preset = "Prologix Ethernet (Official v01.06.06.00)"
 
-        # Load Persistent Application Preferences via QSettings
-        self.settings = QSettings("BenchForge", "Studio")
+        # Preferences live in a plain INI file, NOT in QSettings' native
+        # backend. Native means the Windows registry here, a plist on macOS and
+        # an INI on Linux -- three opaque stores for the same data, and the
+        # registry in particular ties the tool to one platform and cannot be
+        # copied, inspected or deleted like a file.
+        self.settings = self._open_settings()
 
         # Apply the Fluent stylesheet before widgets are built.
         self._apply_qt_stylesheet()
@@ -281,6 +286,25 @@ class BenchForgeQtApp(QMainWindow):
     @classmethod
     def _settings_ignored(cls) -> bool:
         return bool(os.environ.get(cls.IGNORE_SETTINGS_ENV))
+
+    def _open_settings(self) -> QSettings:
+        """
+        Open the INI-backed settings file.
+
+        Nothing reads the platform's native store. QSettings' native backend is
+        the Windows registry, a macOS plist and a Linux INI -- three different
+        opaque stores for the same data. A single INI file behaves identically
+        everywhere and can be read, copied between machines, diffed and deleted
+        by hand.
+        """
+        path = paths.settings_file()
+        paths.ensure_dir(os.path.dirname(path))
+        return QSettings(path, QSettings.Format.IniFormat)
+
+    @property
+    def settings_path(self) -> str:
+        """Where preferences are stored, for display and for support requests."""
+        return self.settings.fileName()
 
     def _setting(self, key, default, value_type=None):
         """

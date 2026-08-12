@@ -1665,5 +1665,82 @@ class TestBenchForge(unittest.TestCase):
                     os.environ['LOCALAPPDATA'] = previous
 
 
+    def test_27_settings_are_a_portable_file_not_the_registry(self):
+        """
+        Preferences must live in an INI file, on every platform.
+
+        QSettings' native backend is the Windows registry, a macOS plist and a
+        Linux INI -- three opaque stores for the same data, and the registry in
+        particular cannot be copied between machines, inspected or deleted like
+        a file. Storing settings there would tie the tool to one platform.
+        """
+        if importlib.util.find_spec("PySide6") is None:
+            self.skipTest("PySide6 not installed")
+
+        import tempfile
+
+        from core import paths
+
+        # Every platform must resolve to a real per-user directory, and the
+        # settings file must be an .ini inside it.
+        original_platform = sys.platform
+        saved_env = dict(os.environ)
+        try:
+            for platform_name, env in (
+                    ("win32", {"APPDATA": r"C:\Users\x\AppData\Roaming",
+                               "LOCALAPPDATA": r"C:\Users\x\AppData\Local"}),
+                    ("darwin", {}),
+                    ("linux", {"XDG_CONFIG_HOME": "/home/x/.config",
+                               "XDG_STATE_HOME": "/home/x/.local/state"})):
+                for key in ("APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME",
+                            "XDG_STATE_HOME", paths.CONFIG_DIR_ENV):
+                    os.environ.pop(key, None)
+                os.environ.update(env)
+                sys.platform = platform_name
+
+                config = paths.config_dir()
+                self.assertTrue(config, platform_name)
+                self.assertIn(paths.APP_NAME, config, platform_name)
+                self.assertTrue(paths.settings_file().endswith(".ini"),
+                                platform_name)
+                # Logs are separate from preferences everywhere: they are
+                # machine-local diagnostics and must not roam or sync.
+                self.assertNotEqual(paths.log_dir(), config, platform_name)
+        finally:
+            sys.platform = original_platform
+            os.environ.clear()
+            os.environ.update(saved_env)
+
+        # And the running application must actually use that file.
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from PySide6.QtCore import QSettings
+        from PySide6.QtWidgets import QApplication
+
+        from core.gui_qt import BenchForgeQtApp
+
+        tmp = tempfile.mkdtemp(prefix="bf-settings-test-")
+        os.environ[paths.CONFIG_DIR_ENV] = tmp
+        app = QApplication.instance() or QApplication([])
+        window = BenchForgeQtApp()
+        try:
+            self.assertEqual(window.settings.format(),
+                             QSettings.Format.IniFormat,
+                             "settings must not use the native backend")
+            self.assertTrue(window.settings_path.endswith("benchforge.ini"),
+                            window.settings_path)
+            self.assertIn("bf-settings-test-", window.settings_path)
+
+            window.settings.setValue("probe", "written")
+            window.settings.sync()
+            written = os.path.join(tmp, "benchforge.ini")
+            self.assertTrue(os.path.isfile(written), written)
+            with open(written, encoding="utf-8") as handle:
+                self.assertIn("probe=written", handle.read())
+        finally:
+            window.close()
+            del app
+            os.environ.pop(paths.CONFIG_DIR_ENV, None)
+
+
 if __name__ == "__main__":
     unittest.main()
