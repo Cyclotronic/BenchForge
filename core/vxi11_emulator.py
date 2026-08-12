@@ -22,7 +22,10 @@ from typing import Dict, Optional
 
 from .device_emulator import InstrumentRegistry, VirtualInstrument
 from .diagnostics import ERROR_MEANINGS, INFO, WARN, DiagnosticEmitter
-from .netutil import create_tcp_listener
+from .netutil import (
+    DEFAULT_MAX_CLIENT_HANDLERS, MAX_RPC_RECORD_BYTES, ClientLimiter,
+    create_tcp_listener,
+)
 
 # --- ONC RPC ---------------------------------------------------------------
 MSG_CALL, MSG_REPLY = 0, 1
@@ -130,6 +133,7 @@ class VXI11EmulatorServer(DiagnosticEmitter):
         self._running = False
         self._sockets = []
         self._threads = []
+        self._client_limiter = ClientLimiter(DEFAULT_MAX_CLIENT_HANDLERS)
         self.packet_callbacks = []
         # Mirrors the Prologix server's attribute so the GUI can treat either
         # gateway the same way.
@@ -587,6 +591,12 @@ class VXI11EmulatorServer(DiagnosticEmitter):
                         break
                     (marker,) = struct.unpack(">I", buffer[:4])
                     length = marker & 0x7FFFFFFF
+                    if length > MAX_RPC_RECORD_BYTES:
+                        self.diagnose(
+                            WARN, 'RPC record exceeded safety limit',
+                            'client declared %d bytes; limit is %d; connection '
+                            'closed' % (length, MAX_RPC_RECORD_BYTES))
+                        return
                     if len(buffer) < 4 + length:
                         break
                     payload, buffer = buffer[4:4 + length], buffer[4 + length:]
@@ -642,15 +652,34 @@ class VXI11EmulatorServer(DiagnosticEmitter):
                 conn, _addr = sock.accept()
             except Exception:
                 break
+            if not self._client_limiter.admit(conn):
+                self.diagnose(
+                    WARN, 'client connection refused by safety limit',
+                    'already handling %d clients; limit is %d'
+                    % (self._client_limiter.active_count,
+                       self._client_limiter.limit))
+                conn.close()
+                continue
             conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            t = threading.Thread(target=self._serve_stream, args=(conn,),
+            t = threading.Thread(target=self._serve_limited_stream, args=(conn,),
                                  daemon=True)
-            t.start()
+            try:
+                t.start()
+            except Exception:
+                self._client_limiter.release(conn)
+                conn.close()
+                continue
             # Drop finished threads rather than retaining every Thread object
             # for the life of the process: a long session with many short
             # client connections would otherwise grow this list without bound.
             self._threads = [x for x in self._threads if x.is_alive()]
             self._threads.append(t)
+
+    def _serve_limited_stream(self, conn):
+        try:
+            self._serve_stream(conn)
+        finally:
+            self._client_limiter.release(conn)
 
     def _udp_loop(self, sock):
         """The portmapper is reachable over UDP as well as TCP."""
@@ -717,6 +746,7 @@ class VXI11EmulatorServer(DiagnosticEmitter):
             except Exception:
                 pass
         self._sockets.clear()
+        self._client_limiter.close_all()
         with self._lock:
             self.links.clear()
         print("[VXI11EmulatorServer] Stopped")

@@ -215,6 +215,9 @@ class BenchForgeQtApp(QMainWindow):
 
         self.lxi_raw_server = LXIRawSocketServer(host="127.0.0.1", port=5025, registry=self.registry)
 
+        self.lxi_raw_server.add_diagnostic_callback(
+            self._on_diagnostic_callback)
+
         # The E5810A's real client interface. Kept alongside rather than
         # swapped in by _set_gateway_class, because it is a different protocol
         # on different ports, not another flavour of the ++ command set.
@@ -304,6 +307,12 @@ class BenchForgeQtApp(QMainWindow):
                 "Started from defaults (%s set); settings will not be saved."
                 % self.IGNORE_SETTINGS_ENV, 6000)
             self._on_mode_changed(0)
+            verify_host = os.environ.get('BENCHFORGE_VERIFY_HOST')
+            verify_port = os.environ.get('BENCHFORGE_VERIFY_PORT')
+            if verify_host:
+                self.host_input.setText(verify_host)
+            if verify_port:
+                self.port_input.setText(verify_port)
             return
 
         saved_mode = self.settings.value("last_emulation_mode", "")
@@ -1756,6 +1765,7 @@ class BenchForgeQtApp(QMainWindow):
             self.server.stop()
             self.lxi_raw_server.stop()
             self.lxi_discovery.stop()
+            self.vxi11_server.stop()
             self._set_running_state(False)
             port = (self.lxi_port_input.text() if is_e5810a else self.port_input.text())
             self._set_label(self.sb_state, "Stopped")

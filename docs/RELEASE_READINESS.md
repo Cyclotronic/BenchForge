@@ -84,14 +84,12 @@ a binary that runs everywhere is.
 
 ---
 
-## Open, with recommendations
+## Release follow-ups
 
-### No application icon · *cosmetic, but visible*
+### Application icon · *resolved*
 
-There is no `.ico` in the repository, so the exe carries PyInstaller's default.
-For a tool being handed to another developer this is the most visible remaining
-rough edge. Needs an asset before it can be fixed — a 256×256 `.ico` dropped in
-and referenced as `icon=` in the spec.
+The executable and running application now use the BenchForge icon. The frozen
+bundle verifier checks both the PNG and ICO assets before release.
 
 ### The binary is unsigned · *decide before distributing*
 
@@ -104,23 +102,19 @@ does not read as a red flag.
 **This is worth a decision rather than a default**, because the first thing the
 recipient sees should not be a security warning.
 
-### Dependencies are unpinned · *reproducibility*
+### Release dependencies · *resolved*
 
-`PySide6>=6.5.0` means two builds a month apart can bundle different Qt
-versions. Fine for development, not ideal for a release you may need to
-reproduce when someone reports a fault. Consider pinning exact versions in a
-`requirements-release.txt` and recording the built-against versions in the
-release notes.
+Development requirements retain compatible lower bounds. Official candidates
+use exact versions from `requirements-release.txt`, including Python 3.14.6 in
+the workflow. Every bundle contains `BUILDINFO.txt` with the resolved runtime
+and packaging versions.
 
-### A windowed build fails silently · *partially mitigated*
+### Windowed crash diagnostics · *resolved*
 
-`console=False` means an unhandled exception at startup shows the user nothing
-at all. This bit us: a missing import produced a process that launched, stayed
-alive and never bound its port, with no error anywhere.
-
-Mitigated by the pre-flight gate and `verify_frozen_build.py`. Not eliminated.
-The real fix is a crash log — wrap `main()` and write any traceback beside the
-executable — so a tester can send a file instead of "it didn't start".
+`console=False` no longer makes an unhandled failure silent. The exception hook
+is installed before Qt and GUI imports, writes a traceback under
+`%LOCALAPPDATA%\BenchForge\logs`, and shows the user that path. Crash reports
+remain local unless the user chooses to share one.
 
 ---
 
@@ -133,12 +127,20 @@ python tools/verify_hardware.py  --host <prologix>   # if hardware is available
 python tools/ab_instruments.py   --host <prologix>
 ```
 
+The network safety envelopes are verified against loopback emulator instances.
+Do **not** send oversized or connection-exhaustion probes to production lab
+hardware. If physical-controller boundary characterization is desired, schedule
+it for a maintenance window when a controller reset and temporary loss of bench
+connectivity cannot disrupt users.
+
 Then, by hand:
 
 - [ ] Launch the packaged app and confirm the title bar shows the expected version
 - [ ] Check Properties → Details on the exe
 - [ ] Confirm `docs/RELEASE_NOTES.md` matches what is actually in the build
-- [ ] Zip the `dist/BenchForge` folder and publish the SHA-256 alongside it
+- [ ] Push the matching version tag and download its candidate workflow artifact
+- [ ] Complete UAT against that exact ZIP and record the candidate run ID
+- [ ] Run **Publish Verified Release** with the approved run ID and tag; do not rebuild
 
 > A network drive will not execute the binary. `H:` here is one, so the bundle
 > must be copied to local storage before it will run — the verifier stages it

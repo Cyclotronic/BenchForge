@@ -85,7 +85,7 @@ python benchforge.py
 ```bash
 python -m unittest discover -s tests
 ```
-*24 tests covering the gateways, instrument models, DNS-SD behavior, GUI
+*26 tests covering the gateways, instrument models, DNS-SD behavior, GUI
 construction, and packaging integration. They require no physical hardware.*
 
 ### Verifying Against Your Own Hardware
