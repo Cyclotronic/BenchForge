@@ -21,6 +21,9 @@ from core.device_emulator import (
 )
 from core.prologix_emulator import PrologixEmulatorServer
 from core.vxi11_lxi_emulator import LXIDiscoveryResponder, LXIRawSocketServer
+from core.netutil import (
+    MAX_PENDING_TEXT_CHARS, MAX_RPC_RECORD_BYTES, ClientLimiter,
+)
 
 
 def bench_spec(name):
@@ -1286,6 +1289,46 @@ class TestBenchForge(unittest.TestCase):
             window._drain_warning_queue()
             self.assertEqual(window.debug_table.rowCount(), 1)
             self.assertEqual(window.warning_count, 1)
+
+            # If discovery fails after raw SCPI and VXI-11 have both bound,
+            # rollback must release every listener before reporting Stopped.
+            def unused_port():
+                probe = socket.socket()
+                probe.bind(('127.0.0.1', 0))
+                port = probe.getsockname()[1]
+                probe.close()
+                return port
+
+            lxi_port, core_port, portmap_port = (
+                unused_port(), unused_port(), unused_port())
+            window.mode_cb.setCurrentIndex(1)
+            window.lxi_port_input.setText(str(lxi_port))
+            window.vxi11_server.core_port = core_port
+            window.vxi11_server.portmap_port = portmap_port
+            discovery_start = window.lxi_discovery.start
+
+            def fail_discovery():
+                raise OSError('simulated mDNS startup failure')
+
+            window.lxi_discovery.start = fail_discovery
+            try:
+                window._start_servers(silent=True)
+            finally:
+                window.lxi_discovery.start = discovery_start
+
+            self.assertFalse(window.lxi_raw_server._is_running)
+            self.assertFalse(window.vxi11_server._running)
+            self.assertFalse(window.lxi_discovery._is_running)
+            self.assertEqual(window.vxi11_server._sockets, [])
+
+            for released_port in (lxi_port, core_port, portmap_port):
+                probe = socket.socket()
+                probe.setsockopt(socket.SOL_SOCKET,
+                                 socket.SO_EXCLUSIVEADDRUSE, 1)
+                try:
+                    probe.bind(('127.0.0.1', released_port))
+                finally:
+                    probe.close()
         finally:
             window.close()
             del app
@@ -1460,9 +1503,244 @@ class TestBenchForge(unittest.TestCase):
             with open(load_file, "r", encoding="utf-8") as f:
                 self.assertEqual(f.read(), load_expected)
 
+    def test_23_network_safety_envelopes(self):
+        '''Oversized or excess local clients are rejected without poisoning servers.'''
+        from core.vxi11_emulator import VXI11EmulatorServer
+        from tools.vxi11 import VXI11Client
+
+        def wait_for(predicate, timeout=3.0):
+            deadline = time.time() + timeout
+            while time.time() < deadline:
+                if predicate():
+                    return True
+                time.sleep(0.02)
+            return predicate()
+
+        def peer_closed(sock):
+            sock.settimeout(0.2)
+            try:
+                return sock.recv(1) == b''
+            except (ConnectionResetError, ConnectionAbortedError):
+                return True
+            except socket.timeout:
+                return False
+
+        # Prologix: exactly-at-limit remains a valid frame, one character over
+        # is rejected, and a new client still receives the measured identity.
+        pro_events = []
+        pro = PrologixEmulatorServer(host='127.0.0.1', port=0)
+        pro.add_diagnostic_callback(pro_events.append)
+        pro.start()
+        pro_port = pro._server_socket.getsockname()[1]
+        edge = oversized = healthy = None
+        try:
+            edge = socket.create_connection(('127.0.0.1', pro_port), 2.0)
+            edge.settimeout(2.0)
+            edge.sendall(b'++ver' + b' ' *
+                         (MAX_PENDING_TEXT_CHARS - len(b'++ver')) + b'\n')
+            self.assertIn(b'Prologix GPIB-ETHERNET Controller', edge.recv(256))
+            edge.close()
+            edge = None
+
+            oversized = socket.create_connection(('127.0.0.1', pro_port), 2.0)
+            oversized.sendall(b'X' * (MAX_PENDING_TEXT_CHARS + 1))
+            self.assertTrue(wait_for(lambda: peer_closed(oversized)))
+            oversized.close()
+            oversized = None
+            self.assertTrue(any('safety limit' in e['event']
+                                for e in pro_events))
+
+            healthy = socket.create_connection(('127.0.0.1', pro_port), 2.0)
+            healthy.settimeout(2.0)
+            healthy.sendall(b'++ver\n')
+            self.assertIn(b'Prologix GPIB-ETHERNET Controller',
+                          healthy.recv(256))
+            healthy.close()
+            healthy = None
+        finally:
+            for item in (edge, oversized, healthy):
+                if item is not None:
+                    item.close()
+            pro.stop()
+
+        # Raw LXI: the same text boundary applies. A one-slot limiter proves
+        # excess connections are dropped without displacing the admitted one.
+        lxi_events = []
+        lxi = LXIRawSocketServer(host='127.0.0.1', port=0)
+        lxi._client_limiter = ClientLimiter(1)
+        lxi.add_diagnostic_callback(lxi_events.append)
+        lxi.start()
+        lxi_port = lxi._server_socket.getsockname()[1]
+        try:
+            admitted = socket.create_connection(('127.0.0.1', lxi_port), 2.0)
+            self.assertTrue(wait_for(
+                lambda: lxi._client_limiter.active_count == 1))
+            excess = socket.create_connection(('127.0.0.1', lxi_port), 2.0)
+            self.assertTrue(wait_for(lambda: peer_closed(excess)))
+            excess.close()
+
+            admitted.settimeout(2.0)
+            admitted.sendall(b'*IDN?\n')
+            self.assertTrue(admitted.recv(512))
+            admitted.close()
+            self.assertTrue(any('connection refused' in e['event']
+                                for e in lxi_events))
+
+            self.assertTrue(wait_for(
+                lambda: lxi._client_limiter.active_count == 0))
+            oversized = socket.create_connection(('127.0.0.1', lxi_port), 2.0)
+            oversized.sendall(b'X' * (MAX_PENDING_TEXT_CHARS + 1))
+            self.assertTrue(wait_for(lambda: peer_closed(oversized)))
+            oversized.close()
+            self.assertTrue(any('command exceeded' in e['event']
+                                for e in lxi_events))
+        finally:
+            lxi.stop()
+
+        # VXI-11: an at-limit declaration is allowed to await its body; an
+        # over-limit declaration is rejected before any body is transmitted.
+        vxi_events = []
+        vxi = VXI11EmulatorServer(host='127.0.0.1', core_port=0,
+                                  portmap_port=0)
+        vxi.add_diagnostic_callback(vxi_events.append)
+        vxi.start()
+        core_port = vxi._sockets[1].getsockname()[1]
+        edge = bad = client = None
+        try:
+            edge = socket.create_connection(('127.0.0.1', core_port), 2.0)
+            edge.sendall(struct.pack('>I', 0x80000000 | MAX_RPC_RECORD_BYTES))
+            edge.settimeout(0.2)
+            with self.assertRaises(socket.timeout):
+                edge.recv(1)
+            edge.close()
+            edge = None
+
+            bad = socket.create_connection(('127.0.0.1', core_port), 2.0)
+            bad.sendall(struct.pack(
+                '>I', 0x80000000 | (MAX_RPC_RECORD_BYTES + 1)))
+            self.assertTrue(wait_for(lambda: peer_closed(bad)))
+            bad.close()
+            bad = None
+            self.assertTrue(any('RPC record exceeded' in e['event']
+                                for e in vxi_events))
+
+            client = VXI11Client('127.0.0.1', port=core_port, timeout=3.0)
+            _link, err = client.create_link('gpib0,1')
+            self.assertEqual(err, 0)
+        finally:
+            for item in (edge, bad):
+                if item is not None:
+                    item.close()
+            if client is not None:
+                client.close()
+            vxi.stop()
+
+    def test_24_crash_report_is_local_and_actionable(self):
+        '''Unhandled failures produce a readable local report without upload.'''
+        import tempfile
+        from core.crashlog import write_crash_report
+
+        previous = os.environ.get('LOCALAPPDATA')
+        with tempfile.TemporaryDirectory() as local_data:
+            os.environ['LOCALAPPDATA'] = local_data
+            try:
+                try:
+                    raise RuntimeError('deliberate crash-log test')
+                except RuntimeError:
+                    path = write_crash_report(*sys.exc_info())
+
+                self.assertIsNotNone(path)
+                self.assertTrue(os.path.isfile(path))
+                self.assertTrue(os.path.abspath(path).startswith(
+                    os.path.abspath(os.path.join(
+                        local_data, 'BenchForge', 'logs'))))
+                with open(path, 'r', encoding='utf-8') as handle:
+                    report = handle.read()
+                self.assertIn('BenchForge Studio', report)
+                self.assertIn('RuntimeError: deliberate crash-log test', report)
+            finally:
+                if previous is None:
+                    os.environ.pop('LOCALAPPDATA', None)
+                else:
+                    os.environ['LOCALAPPDATA'] = previous
+
+
+    def test_27_settings_are_a_portable_file_not_the_registry(self):
+        """
+        Preferences must live in an INI file, on every platform.
+
+        QSettings' native backend is the Windows registry, a macOS plist and a
+        Linux INI -- three opaque stores for the same data, and the registry in
+        particular cannot be copied between machines, inspected or deleted like
+        a file. Storing settings there would tie the tool to one platform.
+        """
+        if importlib.util.find_spec("PySide6") is None:
+            self.skipTest("PySide6 not installed")
+
+        import tempfile
+
+        from core import paths
+
+        # Every platform must resolve to a real per-user directory, and the
+        # settings file must be an .ini inside it.
+        original_platform = sys.platform
+        saved_env = dict(os.environ)
+        try:
+            for platform_name, env in (
+                    ("win32", {"APPDATA": r"C:\Users\x\AppData\Roaming",
+                               "LOCALAPPDATA": r"C:\Users\x\AppData\Local"}),
+                    ("darwin", {}),
+                    ("linux", {"XDG_CONFIG_HOME": "/home/x/.config",
+                               "XDG_STATE_HOME": "/home/x/.local/state"})):
+                for key in ("APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME",
+                            "XDG_STATE_HOME", paths.CONFIG_DIR_ENV):
+                    os.environ.pop(key, None)
+                os.environ.update(env)
+                sys.platform = platform_name
+
+                config = paths.config_dir()
+                self.assertTrue(config, platform_name)
+                self.assertIn(paths.APP_NAME, config, platform_name)
+                self.assertTrue(paths.settings_file().endswith(".ini"),
+                                platform_name)
+                # Logs are separate from preferences everywhere: they are
+                # machine-local diagnostics and must not roam or sync.
+                self.assertNotEqual(paths.log_dir(), config, platform_name)
+        finally:
+            sys.platform = original_platform
+            os.environ.clear()
+            os.environ.update(saved_env)
+
+        # And the running application must actually use that file.
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from PySide6.QtCore import QSettings
+        from PySide6.QtWidgets import QApplication
+
+        from core.gui_qt import BenchForgeQtApp
+
+        tmp = tempfile.mkdtemp(prefix="bf-settings-test-")
+        os.environ[paths.CONFIG_DIR_ENV] = tmp
+        app = QApplication.instance() or QApplication([])
+        window = BenchForgeQtApp()
+        try:
+            self.assertEqual(window.settings.format(),
+                             QSettings.Format.IniFormat,
+                             "settings must not use the native backend")
+            self.assertTrue(window.settings_path.endswith("benchforge.ini"),
+                            window.settings_path)
+            self.assertIn("bf-settings-test-", window.settings_path)
+
+            window.settings.setValue("probe", "written")
+            window.settings.sync()
+            written = os.path.join(tmp, "benchforge.ini")
+            self.assertTrue(os.path.isfile(written), written)
+            with open(written, encoding="utf-8") as handle:
+                self.assertIn("probe=written", handle.read())
+        finally:
+            window.close()
+            del app
+            os.environ.pop(paths.CONFIG_DIR_ENV, None)
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

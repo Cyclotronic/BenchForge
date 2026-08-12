@@ -1,36 +1,47 @@
-name: Build Release Binary
+name: Build Release Candidate
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: release-${{ github.event.release.tag_name }}
+  group: candidate-${{ github.ref }}
   cancel-in-progress: false
+
+env:
+  RELEASE_PYTHON: '3.14.6'
 
 jobs:
   build:
-    name: Build Windows Release
+    name: Build Verified Windows Candidate
     runs-on: windows-latest
     timeout-minutes: 30
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Tagged Source
         uses: actions/checkout@v7
 
-      - name: Set up Python
+      - name: Confirm Tag Matches Application Version
+        shell: pwsh
+        run: |
+          $value = python -c 'from core.version import __version__; print(__version__)'
+          if (-not $value -or 'v' + $value -ne '${{ github.ref_name }}') {
+            throw 'Tag ${{ github.ref_name }} does not match core/version.py (' + $value + ')'
+          }
+
+      - name: Set up Locked Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: ${{ env.RELEASE_PYTHON }}
           cache: pip
+          cache-dependency-path: requirements-release.txt
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install Locked Release Environment
+        run: python -m pip install --requirement requirements-release.txt
 
       - name: Build Executable with PyInstaller
         run: python build_exe.py
@@ -38,34 +49,35 @@ jobs:
       - name: Verify Frozen Application
         env:
           QT_QPA_PLATFORM: offscreen
-          BENCHFORGE_IGNORE_SETTINGS: "1"
+          BENCHFORGE_IGNORE_SETTINGS: '1'
         run: python tools/verify_frozen_build.py
 
-      - name: Compress Release Folder
+      - name: Compress Verified Candidate
         shell: pwsh
-        run: Compress-Archive -Path dist/BenchForge/* -DestinationPath dist/BenchForge-Windows.zip
+        run: |
+          Compress-Archive -Path dist/BenchForge/* -DestinationPath dist/BenchForge-Windows.zip
+          Copy-Item dist/BenchForge/BUILDINFO.txt dist/BenchForge-Windows.BUILDINFO.txt
 
       - name: Create SHA-256 Checksum
         shell: pwsh
         run: |
           $hash = (Get-FileHash dist/BenchForge-Windows.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  BenchForge-Windows.zip" | Set-Content -Encoding ascii dist/BenchForge-Windows.zip.sha256
+          $hash + '  BenchForge-Windows.zip' | Set-Content -Encoding ascii dist/BenchForge-Windows.zip.sha256
 
-      - name: Preserve Verified Workflow Artifact
+      - name: Preserve Candidate for UAT
         uses: actions/upload-artifact@v7
         with:
-          name: BenchForge-Windows-${{ github.event.release.tag_name }}
+          name: BenchForge-Windows-${{ github.ref_name }}
           path: |
             dist/BenchForge-Windows.zip
             dist/BenchForge-Windows.zip.sha256
+            dist/BenchForge-Windows.BUILDINFO.txt
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v3
-        with:
-          files: |
-            dist/BenchForge-Windows.zip
-            dist/BenchForge-Windows.zip.sha256
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Candidate Handoff
+        shell: pwsh
+        run: |
+          'Candidate run: ${{ github.run_id }}' | Add-Content $env:GITHUB_STEP_SUMMARY
+          'Download artifact BenchForge-Windows-${{ github.ref_name }} and complete UAT.' | Add-Content $env:GITHUB_STEP_SUMMARY
+          'After approval, run the Publish Verified Release workflow with this run ID and tag.' | Add-Content $env:GITHUB_STEP_SUMMARY

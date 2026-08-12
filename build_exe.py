@@ -19,12 +19,20 @@ After building, verify the BUNDLE, not just the source tree:
 
 import argparse
 import importlib.util
+import importlib.metadata
 import os
+import platform
 import shutil
 import subprocess
 import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+BUILD_PACKAGES = (
+    'PySide6', 'PySide6_Addons', 'PySide6_Essentials', 'shiboken6',
+    'pyinstaller', 'pyinstaller-hooks-contrib', 'altgraph', 'packaging',
+    'pefile', 'pywin32-ctypes', 'setuptools', 'pyflakes',
+)
 
 
 def run(label, cmd, optional_module=None):
@@ -103,6 +111,16 @@ def build():
     license_dist = os.path.join(dist, "LICENSES")
     shutil.copytree(os.path.join(SCRIPT_DIR, "LICENSES"), license_dist,
                     dirs_exist_ok=True)
+    build_info = [
+        'BenchForge build environment',
+        'Python==%s' % platform.python_version(),
+    ]
+    for package in BUILD_PACKAGES:
+        build_info.append('%s==%s' % (
+            package, importlib.metadata.version(package)))
+    build_info_path = os.path.join(dist, 'BUILDINFO.txt')
+    with open(build_info_path, 'w', encoding='utf-8', newline='\n') as handle:
+        handle.write('\n'.join(build_info) + '\n')
     shutil.copy2(os.path.join(SCRIPT_DIR, "LICENSE"),
                  os.path.join(license_dist, "LICENSE"))
     print("\n[+] Build succeeded: %s" % dist)

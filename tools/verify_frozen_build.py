@@ -117,6 +117,9 @@ for name in ("benchforge-icon.png", "benchforge-icon.ico"):
     check("application icon: %s" % name, found is not None,
           found or "not found under %s" % bundle_dir)
 print("\n=== staging ===")
+build_info_path = os.path.join(bundle_dir, 'BUILDINFO.txt')
+check('release build manifest: BUILDINFO.txt',
+      os.path.isfile(build_info_path), build_info_path)
 staged_dir = None
 if args.copy_local == "always" or (args.copy_local == "auto"
                                    and is_network_drive(args.exe)):
@@ -149,6 +152,8 @@ if already:
 # and port the developer last used -- which is how this check first "failed":
 # a leftover E5810A persona on a stale test port, not a build defect.
 env = dict(os.environ, BENCHFORGE_IGNORE_SETTINGS="1")
+env['BENCHFORGE_VERIFY_HOST'] = args.host
+env['BENCHFORGE_VERIFY_PORT'] = str(args.port)
 # Capture the app's output. A windowed build shows the user nothing when it
 # dies, and without this the tool can only report "the connection reset" and
 # leave you guessing which side broke.

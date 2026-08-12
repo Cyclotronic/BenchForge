@@ -1,0 +1,96 @@
+name: Publish Verified Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: Actions run ID of the UAT-approved candidate
+        required: true
+        type: string
+      tag:
+        description: Existing version tag, for example v1.0.0-rc1
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish UAT-Approved Candidate
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout the Release Tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Validate Candidate Provenance
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.candidate_run_id }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ($env:TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$') {
+            throw 'Invalid release tag: ' + $env:TAG
+          }
+          $run = gh api ('repos/${{ github.repository }}/actions/runs/' + $env:RUN_ID) | ConvertFrom-Json
+          if ($run.event -ne 'push' -or $run.conclusion -ne 'success') {
+            throw 'Candidate run must be a successful tag-push workflow run.'
+          }
+          $tagSha = (git rev-parse HEAD).Trim()
+          if ($run.head_sha -ne $tagSha) {
+            throw 'Candidate run SHA does not match the checked-out release tag.'
+          }
+
+      - name: Download the Exact Candidate Run
+        uses: actions/download-artifact@v7
+        with:
+          name: BenchForge-Windows-${{ inputs.tag }}
+          path: candidate
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.candidate_run_id }}
+
+      - name: Verify Candidate Files
+        shell: pwsh
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          $zip = 'candidate/BenchForge-Windows.zip'
+          $checksum = 'candidate/BenchForge-Windows.zip.sha256'
+          $buildInfo = 'candidate/BenchForge-Windows.BUILDINFO.txt'
+          foreach ($path in ($zip, $checksum, $buildInfo)) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw 'Candidate file missing: ' + $path
+            }
+          }
+          $expected = ((Get-Content $checksum -Raw).Trim() -split '\s+')[0]
+          $actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {
+            throw 'Candidate ZIP checksum does not match.'
+          }
+          $version = $env:TAG.TrimStart('v')
+          $sourceVersion = python -c 'from core.version import __version__; print(__version__)'
+          if ($sourceVersion -ne $version) {
+            throw 'Tag does not match the application version.'
+          }
+          if (-not (Select-String -Path $buildInfo -SimpleMatch 'Python==3.14.6')) {
+            throw 'Candidate was not built with the locked Python runtime.'
+          }
+
+      - name: Publish Without Rebuilding
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          $title = 'BenchForge Studio ' + $env:TAG.TrimStart('v')
+          gh release create $env:TAG candidate/BenchForge-Windows.zip candidate/BenchForge-Windows.zip.sha256 candidate/BenchForge-Windows.BUILDINFO.txt --verify-tag --title $title --notes-file docs/RELEASE_NOTES.md

@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QGraphicsDropShadowEffect, QCheckBox
 )
 
+from . import paths
 from . import theme
 
 from .diagnostics import format_record
@@ -215,6 +216,9 @@ class BenchForgeQtApp(QMainWindow):
 
         self.lxi_raw_server = LXIRawSocketServer(host="127.0.0.1", port=5025, registry=self.registry)
 
+        self.lxi_raw_server.add_diagnostic_callback(
+            self._on_diagnostic_callback)
+
         # The E5810A's real client interface. Kept alongside rather than
         # swapped in by _set_gateway_class, because it is a different protocol
         # on different ports, not another flavour of the ++ command set.
@@ -241,8 +245,12 @@ class BenchForgeQtApp(QMainWindow):
         self._telemetry_lock = threading.Lock()
         self._previous_preset = "Prologix Ethernet (Official v01.06.06.00)"
 
-        # Load Persistent Application Preferences via QSettings
-        self.settings = QSettings("BenchForge", "Studio")
+        # Preferences live in a plain INI file, NOT in QSettings' native
+        # backend. Native means the Windows registry here, a plist on macOS and
+        # an INI on Linux -- three opaque stores for the same data, and the
+        # registry in particular ties the tool to one platform and cannot be
+        # copied, inspected or deleted like a file.
+        self.settings = self._open_settings()
 
         # Apply the Fluent stylesheet before widgets are built.
         self._apply_qt_stylesheet()
@@ -279,6 +287,25 @@ class BenchForgeQtApp(QMainWindow):
     def _settings_ignored(cls) -> bool:
         return bool(os.environ.get(cls.IGNORE_SETTINGS_ENV))
 
+    def _open_settings(self) -> QSettings:
+        """
+        Open the INI-backed settings file.
+
+        Nothing reads the platform's native store. QSettings' native backend is
+        the Windows registry, a macOS plist and a Linux INI -- three different
+        opaque stores for the same data. A single INI file behaves identically
+        everywhere and can be read, copied between machines, diffed and deleted
+        by hand.
+        """
+        path = paths.settings_file()
+        paths.ensure_dir(os.path.dirname(path))
+        return QSettings(path, QSettings.Format.IniFormat)
+
+    @property
+    def settings_path(self) -> str:
+        """Where preferences are stored, for display and for support requests."""
+        return self.settings.fileName()
+
     def _setting(self, key, default, value_type=None):
         """
         Read a persisted preference, honouring the clean-room switch.
@@ -304,6 +331,12 @@ class BenchForgeQtApp(QMainWindow):
                 "Started from defaults (%s set); settings will not be saved."
                 % self.IGNORE_SETTINGS_ENV, 6000)
             self._on_mode_changed(0)
+            verify_host = os.environ.get('BENCHFORGE_VERIFY_HOST')
+            verify_port = os.environ.get('BENCHFORGE_VERIFY_PORT')
+            if verify_host:
+                self.host_input.setText(verify_host)
+            if verify_port:
+                self.port_input.setText(verify_port)
             return
 
         saved_mode = self.settings.value("last_emulation_mode", "")
@@ -1756,6 +1789,7 @@ class BenchForgeQtApp(QMainWindow):
             self.server.stop()
             self.lxi_raw_server.stop()
             self.lxi_discovery.stop()
+            self.vxi11_server.stop()
             self._set_running_state(False)
             port = (self.lxi_port_input.text() if is_e5810a else self.port_input.text())
             self._set_label(self.sb_state, "Stopped")

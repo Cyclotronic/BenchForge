@@ -12,6 +12,42 @@ import sys
 # Ensure the repository root is importable when run as a script.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from core.crashlog import write_crash_report
+
+
+def _show_crash_dialog(path):
+    detail = ('A crash report was written to:\n%s' % path if path else
+              'The crash report could not be written. Check Windows event logs.')
+    message = 'BenchForge Studio encountered an unexpected error.\n\n' + detail
+    try:
+        from PySide6.QtWidgets import QApplication, QMessageBox
+        if QApplication.instance() is not None:
+            QMessageBox.critical(None, 'BenchForge Studio Error', message)
+            return
+    except Exception:
+        pass
+
+    if os.name == 'nt':
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0, message, 'BenchForge Studio Error', 0x10)
+        except Exception:
+            pass
+
+
+def _handle_unhandled_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    path = write_crash_report(exc_type, exc_value, exc_traceback)
+    _show_crash_dialog(path)
+
+
+# Install before importing Qt or the GUI so early startup/import failures are
+# actionable in the console-free packaged application too.
+sys.excepthook = _handle_unhandled_exception
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication

@@ -20,7 +20,10 @@ import time
 from typing import Dict, Any, Callable, Optional
 from .device_emulator import InstrumentRegistry, VirtualInstrument
 from .diagnostics import ERROR_MEANINGS, INFO, WARN, DiagnosticEmitter
-from .netutil import create_tcp_listener
+from .netutil import (
+    DEFAULT_MAX_CLIENT_HANDLERS, MAX_PENDING_TEXT_CHARS, ClientLimiter,
+    create_tcp_listener,
+)
 
 
 #: Response origin. The controller terminates its own replies with CRLF;
@@ -204,6 +207,7 @@ class PrologixEmulatorServer(DiagnosticEmitter):
         port: int = 1234,
         registry: Optional[InstrumentRegistry] = None,
         connection_policy: str = POLICY_SINGLE,
+        max_client_handlers: int = DEFAULT_MAX_CLIENT_HANDLERS,
     ):
         self.host = host
         self.port = port
@@ -213,6 +217,7 @@ class PrologixEmulatorServer(DiagnosticEmitter):
         self._server_socket: Optional[socket.socket] = None
         self._is_running = False
         self._server_thread: Optional[threading.Thread] = None
+        self._client_limiter = ClientLimiter(max_client_handlers)
 
         # Hardware global state
         self.global_state = PrologixState()
@@ -304,6 +309,8 @@ class PrologixEmulatorServer(DiagnosticEmitter):
                 pass
             self._server_socket = None
 
+        self._client_limiter.close_all()
+
         with self._socket_lock:
             if self.active_client_sock:
                 try:
@@ -322,6 +329,15 @@ class PrologixEmulatorServer(DiagnosticEmitter):
                 client_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 client_id = f"{addr[0]}:{addr[1]}"
 
+                if not self._client_limiter.admit(client_sock):
+                    self.diagnose(
+                        WARN, 'client connection refused by safety limit',
+                        'already handling %d clients; limit is %d'
+                        % (self._client_limiter.active_count,
+                           self._client_limiter.limit))
+                    client_sock.close()
+                    continue
+
                 with self._socket_lock:
                     if self.connection_policy == self.POLICY_SINGLE:
                         # Physical hardware drops previous socket when a new connection arrives
@@ -339,15 +355,31 @@ class PrologixEmulatorServer(DiagnosticEmitter):
                               f"{addr[0]}:{addr[1]}")
 
                 client_thread = threading.Thread(
-                    target=self._handle_client,
+                    target=self._handle_limited_client,
                     args=(client_sock, client_id),
                     daemon=True,
                     name=f"ClientThread-{client_id}",
                 )
-                client_thread.start()
+                try:
+                    client_thread.start()
+                except Exception:
+                    self._client_limiter.release(client_sock)
+                    client_sock.close()
+                    with self._socket_lock:
+                        self.active_clients.pop(client_id, None)
+                        if self.active_client_sock is client_sock:
+                            self.active_client_sock = None
+                            self.active_client_id = None
+                    raise
             except Exception:
                 if not self._is_running:
                     break
+
+    def _handle_limited_client(self, client_sock: socket.socket, client_id: str):
+        try:
+            self._handle_client(client_sock, client_id)
+        finally:
+            self._client_limiter.release(client_sock)
 
     def _handle_client(self, client_sock: socket.socket, client_id: str):
         # Every socket connection uses strict real Prologix hardware state behavior
@@ -366,7 +398,20 @@ class PrologixEmulatorServer(DiagnosticEmitter):
                 while True:
                     delimiter_idx = self.find_terminator(buffer)
                     if delimiter_idx is None:
+                        if len(buffer) > MAX_PENDING_TEXT_CHARS:
+                            self.diagnose(
+                                WARN, 'client command exceeded safety limit',
+                                'more than %d characters without a terminator; '
+                                'connection closed' % MAX_PENDING_TEXT_CHARS)
+                            return
                         break
+
+                    if delimiter_idx > MAX_PENDING_TEXT_CHARS:
+                        self.diagnose(
+                            WARN, 'client command exceeded safety limit',
+                            'more than %d characters before a terminator; '
+                            'connection closed' % MAX_PENDING_TEXT_CHARS)
+                        return
 
                     raw_line = buffer[:delimiter_idx]
                     buffer = buffer[delimiter_idx + 1:]
@@ -636,4 +681,3 @@ class PrologixEmulatorServer(DiagnosticEmitter):
 
         unrecognized()
         return responses
-

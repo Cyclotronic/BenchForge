@@ -1,8 +1,14 @@
 # Privacy
 
-BenchForge does not collect telemetry, usage analytics, crash reports, or
+BenchForge does not transmit telemetry, usage analytics, crash reports, or
 personal information. It does not contact an update service or any
 BenchForge-operated Internet service.
+
+If the desktop application encounters an unexpected unhandled failure, it
+writes a diagnostic traceback under `%LOCALAPPDATA%\BenchForge\logs` and shows
+the path to the user. The file remains on the local computer and is never
+uploaded automatically. The user decides whether to inspect, delete, or share
+it when reporting a problem.
 
 BenchForge is a network instrument and gateway emulator. When the user starts
 an emulation engine, it may:
