@@ -7,6 +7,26 @@
 
 ---
 
+> [!IMPORTANT]
+> ### 📦 Version 1.0.0 — a Windows build is ready
+>
+> A verified Windows build is available from the
+> [Releases](https://github.com/Cyclotronic/BenchForge/releases) page as
+> `BenchForge-Windows.zip`, with a `.sha256` checksum and a `BUILDINFO.txt`
+> recording the exact Python and package versions it was built from.
+>
+> **Before reporting a bug, read [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).**
+> Three behaviours look like defects and are not — most importantly,
+> TestController cannot connect to the E5810A persona, because a real E5810A
+> refuses the device string it sends.
+>
+> The executable is **not code-signed**, so Windows SmartScreen will warn on
+> first run. Verify the SHA-256 against the published checksum rather than
+> relying on the warning. Extract to local storage: Windows will not execute a
+> binary from a network drive.
+
+---
+
 ## 📖 Overview
 
 **BenchForge Studio** is a standalone, lightweight, multi-protocol bench instrument and hardware gateway emulator suite. It empowers lab automation engineers, driver developers, and test software authors to build, test, and validate instrument automation scripts **without needing physical test equipment or hardware adapters on their desk**.

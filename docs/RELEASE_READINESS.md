@@ -1,6 +1,6 @@
 # Windows Build & Release Readiness Review
 
-**Version 1.0.0-rc1** · reviewed 2026-08-10
+**Version 1.0.0** · reviewed 2026-08-10
 
 Scope: packaging, the build gate, and what a binary handed to an external
 developer needs. Everything below was checked against an actual build, not
@@ -23,7 +23,7 @@ so it cannot drift from the application:
 ```
 ProductName     BenchForge Studio
 FileDescription Universal Bench Instrument & Gateway Emulator
-FileVersion     1.0.0-rc1
+FileVersion     1.0.0
 CompanyName     BenchForge
 LegalCopyright  MIT Licence
 ```

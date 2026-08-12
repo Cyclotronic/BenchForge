@@ -19,8 +19,9 @@ from PyInstaller.utils.win32.versioninfo import (
 _version_src = open("core/version.py", encoding="utf-8").read()
 VERSION = re.search(r'__version__\s*=\s*"([^"]+)"', _version_src).group(1)
 
-# Windows wants four integers. '1.0.0-rc1' -> (1, 0, 0, 1); a final release
-# with no suffix gets a build number of 0.
+# Windows wants four integers. A final release such as '1.0.0' becomes
+# (1, 0, 0, 0); a pre-release keeps its number in the fourth field, so
+# '1.0.0-rc1' -> (1, 0, 0, 1) and sorts below the final build.
 _m = re.match(r"(\d+)\.(\d+)\.(\d+)(?:-\w*?(\d+))?", VERSION)
 FILEVERS = (int(_m.group(1)), int(_m.group(2)), int(_m.group(3)),
             int(_m.group(4) or 0))

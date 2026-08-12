@@ -1,6 +1,6 @@
 # BenchForge Studio — Release Notes
 
-**Version 1.0.0-rc1** · hardware profiles verified 2026-08-10
+**Version 1.0.0** · hardware profiles verified 2026-08-10
 
 ---
 
