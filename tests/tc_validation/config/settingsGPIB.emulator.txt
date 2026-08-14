@@ -1,0 +1,1 @@
+PrologixEthernet|id:A|address:127.0.0.1|baudrate:|settings:port:1235|

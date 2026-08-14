@@ -42,3 +42,7 @@ core/sample_devices/** -text
 *.ico   binary
 *.pdf   binary
 *.dat   binary
+
+# Compressed captures (tests/tc_validation/captures/). Declared rather than left
+# to text=auto detection, so an archive can never be line-ending converted.
+*.gz    binary
