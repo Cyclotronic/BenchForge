@@ -28,8 +28,4 @@ env/
 .DS_Store
 Thumbs.db
 
-# Agent & local assistant configs
-.claude/
-.agents/
-.gemini/
 
