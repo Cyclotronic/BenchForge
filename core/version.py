@@ -5,7 +5,7 @@ Kept in its own module so the GUI, the build script and the release notes
 cannot drift apart.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 #: Firmware/identity the Prologix persona reports. Changing this changes what
 #: every client sees, so it lives beside the version rather than inline.
