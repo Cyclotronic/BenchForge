@@ -524,11 +524,24 @@ class VXI11EmulatorServer(DiagnosticEmitter):
         if proc == PMAPPROC_NULL:
             return SUCCESS, b""
         if proc == PMAPPROC_GETPORT:
-            prog, _vers, _prot, _port = struct.unpack(">IIII", args[:16])
+            prog, _vers, _prot, req_port = struct.unpack(">IIII", args[:16])
             # MEASURED: only the core channel is registered. The abort and
             # interrupt programs return 0 even though create_link advertises
             # an abort port.
             port = self.core_port if prog == CORE_PROG else 0
+            # GETPORT's `port` argument is a lookup filter that every
+            # portmapper discards, this one included -- MEASURED: ports 0, 5,
+            # 21, 22 and 99 all returned 1024. It is reported because
+            # TestController puts the GPIB address there
+            # (LXIInterface.java:55) instead of in the create_link device
+            # string, so a harness needs to watch the address arrive and be
+            # dropped. See docs/E5810A_PROTOCOL_GUIDE.md section 4.
+            self.diagnose(
+                INFO, "portmap GETPORT prog=%d" % prog,
+                "returning port %d; the request's port argument was %d and is "
+                "ignored, as the standard requires" % (port, req_port),
+                extra={"getport_prog": prog, "getport_port": req_port,
+                       "getport_result": port})
             return SUCCESS, struct.pack(">I", port)
         if proc == PMAPPROC_DUMP:
             entry = struct.pack(">I", 1) + struct.pack(

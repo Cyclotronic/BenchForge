@@ -10,10 +10,11 @@ the findings are written up in
 
 | Path | Purpose |
 | :--- | :--- |
-| `bench_emulator.py` | Instrumented emulator. Runs the default 5-device bench, logs every frame and every connection event, prints a report on exit. |
+| `bench_emulator.py` | Instrumented emulator. Runs the default 5-device bench, logs every frame and every connection event, prints a report on exit. `--gateway prologix` (default) or `--gateway e5810`. |
 | `analyze_tc_log.py` | Cross-checks a TestController debug log against the emulator's frame log. Reads plain or `.gz`. |
 | `config/` | Interface and script fragments for pointing TestController at the emulator. |
 | `captures/2026-08-14/` | Raw evidence behind the 3.49 validation, gzipped. |
+| `../../tools/patch_testcontroller_e5810.py` | Builds a patched jar for the E5810 exercise below. |
 
 ## What is deliberately not here
 
@@ -98,6 +99,64 @@ is *not* a reliable discriminator. We initially expected the broken build to ope
 one socket per device thread; it does not. Judge builds by the corruption count
 and thread survival instead.
 
+## The E5810 exercise
+
+Separate from the Prologix work above, and testing a different claim: that
+TestController's Keysight E5810 path fails for one reason only — it asks the
+gateway for the device string `inst0`, which the gateway refuses, while the GPIB
+address it should have sent goes into the portmapper's `GETPORT` filter argument
+where every portmapper discards it. The analysis is in
+[`docs/E5810A_PROTOCOL_GUIDE.md`](../../docs/E5810A_PROTOCOL_GUIDE.md) §4–5.
+
+**1. Start the gateway emulator.** It refuses `inst0` with error 3 and accepts
+`gpib0,0`–`gpib0,31`, both MEASURED against the physical unit.
+
+```bash
+python tests/tc_validation/bench_emulator.py --gateway e5810 --host 127.0.0.1 --label e5810-unpatched
+```
+
+Ports 111 and 1024 are not negotiable for a TestController run:
+`LXIInterfaceMulti` always asks the portmapper on 111 and uses whatever core port
+it returns, and there is no setting for either. `--portmap-port`/`--core-port`
+exist for driving the emulator from a test client, not from TestController.
+
+**2. Point TestController at it.** Same isolated-`configDir` method as above,
+but with `config/settingsGPIB.e5810.txt` as `settingsGPIB.txt` and
+`config/settingsLoad.e5810.txt` as `settingsLoad.txt` — the devices move from
+`A:1`–`A:5` to `E:1`–`E:5`. The interface type is written by hand because
+`PopupGpibConfig` does not offer "Keysight E5810" in its dropdown, though
+`SharedInterfaceList` parses it.
+
+**3. Run the negative control first, with the unpatched jar.** Expect the
+emulator to report every `create_link` refused, and the addresses to show up in
+the `GETPORT` argument rather than in any device string:
+
+```
+  Device strings requested : ['inst0']
+  Addresses in GETPORT arg : [1, 2, 3, 4, 5]
+  Addresses in device str  : (none)
+```
+
+**4. Build and run the patched jar.**
+
+```bash
+python tools/patch_testcontroller_e5810.py --check
+python tools/patch_testcontroller_e5810.py
+```
+
+Six anchored edits across two classes, recompiled with ECJ against your own jar
+so no JDK is needed; the original jar is never written to. Expect the two
+address rows to swap over, and `analyze_tc_log.py` to work unchanged on the
+resulting `-tx.jsonl`.
+
+That flip is the whole result. It is one bit of evidence, but it is the bit the
+guide's §4 predicts, and the negative control costs one extra run.
+
+> The patched build is for validation, not for adoption. It derives the device
+> name from `scpiPort` instead of threading one through, hardcodes the SICL
+> interface name `gpib0`, logs `create_link`'s error code without acting on it,
+> and does not support GPIB address 0. The patcher's docstring says why for each.
+
 ## Archived captures
 
 `captures/2026-08-14/` holds the evidence for the 3.49 validation. Both builds ran
@@ -131,3 +190,11 @@ python analyze_tc_log.py --tc-log captures/2026-08-14/tc-pos49.log.gz \
 - `writeReadBin()` is never exercised — the workload issues no binary reads.
 - The application-shutdown path is untested; every TestController process here was
   terminated programmatically. The close-path NPE was caught via reconnect instead.
+- The E5810 exercise has been verified end-to-end only against a synthetic client
+  replaying TestController's RPC sequence, and the patcher has been verified to
+  build a jar that compiles and carries the new device string. Neither the
+  unpatched nor the patched jar has yet been run against the emulator, and
+  nothing has been run against the physical gateway.
+- Finding F4 — the RPC socket wait being shorter than the VXI-11 `io_timeout` it
+  wraps — cannot be settled on loopback, where the emulator's timeout overhead is
+  simulated rather than physical.

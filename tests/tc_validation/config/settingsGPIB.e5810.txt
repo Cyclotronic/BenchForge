@@ -1,0 +1,15 @@
+; TestController interface definition for the E5810 gateway emulator.
+;
+; "Keysight E5810" is not offered in TestController's GPIB configuration
+; dropdown -- PopupGpibConfig.java builds that combo box from seven types and
+; this is not one of them -- but SharedInterfaceList.addGPIBInterface() parses
+; it, so the interface can be created by writing this line by hand.
+;
+; No port setting: SharedInterfaceKeysightE5810 drives LXIInterfaceMulti, which
+; always asks the portmapper on 111 and then uses whatever core port it returns.
+; The emulator must therefore be run on 111/1024, not on remapped ports:
+;
+;   python tests/tc_validation/bench_emulator.py --gateway e5810 \
+;       --host 127.0.0.1 --label e5810-unpatched
+;
+Keysight E5810|id:E|address:127.0.0.1|baudrate:|settings:|

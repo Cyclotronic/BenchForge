@@ -1,0 +1,5 @@
+[mcp_servers.n8n]
+url = "https://n8n.russg.com/mcp-server/http"
+
+[mcp_servers.n8n.http_headers]
+Authorization = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxOGFjNmFhYS01ODdhLTQ5MzMtYjNhOS0zYWM1ZTBmMzhkNjEiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjNlZjg3N2QwLTczYTQtNGU5My1iODljLTk3MjQyYzE1OTM4OCIsImlhdCI6MTc4NjU2MDc1Mn0.wwpMUKeOJi-P217ZNIFJuw5I02TO9DeJ6Un-Prt5PBU"

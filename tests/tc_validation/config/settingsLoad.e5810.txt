@@ -1,0 +1,7 @@
+ScanSerialPorts:0
+ExcludedSerialPorts:
+Device:Agilent 34411A|PortType:GPIB|Address:E:5|Baudrate:9600|Enabled:1
+Device:Fluke PM6690|PortType:GPIB|Address:E:4|Baudrate:9600|Enabled:1
+Device:Keithley 2001M|PortType:GPIB|Address:E:2|Baudrate:9600|Enabled:1
+Device:Keithley 2002|PortType:GPIB|Address:E:1|Baudrate:9600|Enabled:1
+Device:Keithley 2010|PortType:GPIB|Address:E:3|Baudrate:9600|Enabled:1
